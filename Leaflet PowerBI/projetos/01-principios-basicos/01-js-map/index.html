@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>01- Mapa com Javascript</title>
+    <style>
+        @import url(https://unpkg.com/leaflet@1.9.4/dist/leaflet.css);
+
+        #map {
+            margin: 8 auto;
+            width: 58%;
+            min-height: 400px;
+            max-height: 500px;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <h3>Mapa Empreendimentos</h3>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        // Inicializa o mapa centrado no Brasil
+        var map = L.map('map').setView([-14.2350, -51.9253], 4);
+
+        // Camada base OSM
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Carrega e adiciona o arquivo GeoJSON
+        fetch('Danos.geojson') // <-- Certifique-se que esse arquivo está na mesma pasta do HTML
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: {
+                        color: 'blue',
+                        weight: 2,
+                        fillOpacity: 0.3
+                    },
+                    onEachFeature: function (feature, layer) {
+                        // Mostra popup com propriedades do GeoJSON
+                        if (feature.properties) {
+                            let popupContent = '';
+                            for (const key in feature.properties) {
+                                popupContent += `<strong>${key}</strong>: ${feature.properties[key]}<br>`;
+                            }
+                            layer.bindPopup(popupContent);
+                        }
+                    }
+                }).addTo(map);
+            })
+            .catch(err => {
+                console.error("Erro ao carregar o GeoJSON:", err);
+            });
+    </script>
+</body>
+
+</html>
