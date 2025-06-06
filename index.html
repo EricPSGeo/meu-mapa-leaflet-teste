@@ -17,7 +17,7 @@
             height: 100%;
             transition: transform 0.3s ease;
             transform: translateX(0px);
-            width: 100%;
+            width: 100%; /* Garante que o mapa ocupe 100% da largura disponível */
         }
 
         body.sidebar-hidden #map {
@@ -28,25 +28,25 @@
             position: fixed;
             top: 0;
             right: 0;
-            width: 250px;
+            width: 250px; /* Ajustei a largura para 250px para acomodar o botão de toggle na lateral */
             height: 100%;
-            background: lab(94.8% 0.01 -0.01 / 0.85);
+            background: lab(94.8% 0.01 -0.01 / 0.85); /* Opacidade para o fundo */
             border-left: 1px solid #ccc;
             padding: 12px;
             overflow-y: auto;
             transition: transform 0.3s ease;
             z-index: 999;
-            box-sizing: border-box;
+            box-sizing: border-box; /* Inclui padding e border na largura total */
         }
 
         .sidebar.hidden {
-            transform: translateX(250px);
+            transform: translateX(250px); /* Move para fora da tela (mesma largura da sidebar) */
         }
 
         .toggle-btn {
             position: fixed;
             top: 10px;
-            right: 10px;
+            right: 10px; /* Posição inicial */
             background: rgba(33, 33, 33, 0.7);
             color: #fff;
             padding: 5px 10px;
@@ -72,7 +72,7 @@
             background-color: rgba(255, 255, 255, 0.9);
         }
 
-        /* Estilo para os botões de download */
+        /* Estilos para a nova seção de download */
         .download-section {
             margin-top: 20px;
             padding-top: 10px;
@@ -122,58 +122,70 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
-        var map = L.map('map').setView([-14.2350, -51.9253], 6);
+        var map = L.map('map').setView([-14.2350, -51.9253], 5); // Centralização original
 
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
 
-        // Toggle da sidebar
+        // Referências aos elementos da sidebar e botão de toggle
         const sidebar = document.getElementById('sidebar');
-        const mapElement = document.getElementById('map');
         const toggleBtn = document.getElementById('toggle-btn');
 
+        // Toggle da sidebar
         toggleBtn.addEventListener('click', function () {
             const isHidden = sidebar.classList.toggle('hidden');
-            document.body.classList.toggle('sidebar-hidden', isHidden);
+            document.body.classList.toggle('sidebar-hidden'); // Mantém o body para o CSS do mapa
 
+            // Ajusta a posição do botão de toggle com base na visibilidade da sidebar
             if (isHidden) {
                 toggleBtn.style.right = '10px';
             } else {
                 toggleBtn.style.right = (sidebar.offsetWidth + 10) + 'px';
             }
 
+            // Invalida o tamanho do mapa após a transição da sidebar
             setTimeout(() => {
                 map.invalidateSize();
             }, 310);
         });
 
+        // Posição inicial do botão de toggle (se a sidebar estiver visível por padrão)
         if (!sidebar.classList.contains('hidden')) {
             toggleBtn.style.right = (sidebar.offsetWidth + 10) + 'px';
         }
 
-        // Variáveis para armazenar os dados e camadas do Leaflet
+        // Variáveis para armazenar os dados GeoJSON e as camadas Leaflet
         let pontosLayer;
         let poligonosLayer;
-        let todosOsPontosData = null;
-        let todosOsPoligonosData = null;
+        let todosOsPontosData = null;    // Inicializado como null, será preenchido com as features
+        let todosOsPoligonosData = null; // Inicializado como null, será preenchido com as features
 
-        // Leaflet Layer Control para ligar/desligar camadas
+        // Leaflet Layer Control (será populado e adicionado ao mapa depois que os dados carregarem)
         let overlayMaps = {};
-        let layerControl = L.control.layers(null, overlayMaps).addTo(map);
+        let layerControl = L.control.layers(null, overlayMaps); // Não adiciona ao mapa ainda
 
-        // Função para construir o conteúdo do popup (mantida do código anterior)
+        // Função para construir o conteúdo do popup (reincorporada e ajustada)
+        // ATENÇÃO: Esta função assume que suas features GeoJSON terão uma propriedade 'id_area'
+        // para linkar pontos e polígonos, e 'imagem'/'imagem_area' para URLs de imagem.
+        // Ajuste conforme a estrutura real das propriedades dos seus GeoJSONs.
         function buildPopupContent(feature, type, relatedData) {
             let popupContent = '';
 
+            // Adiciona as propriedades da própria feição
             for (const key in feature.properties) {
                 const value = feature.properties[key];
                 if (key.toLowerCase() === 'imagem' || key.toLowerCase() === 'imagem_area') {
+                    // Trata as propriedades de imagem
                     if (value && typeof value === 'string') {
+                        // Verifica se é uma URL completa
                         if (value.startsWith('http://') || value.startsWith('https://')) {
                             popupContent += `<img src="${value}" alt="Imagem" style="width:100%;max-height:150px;"><br>`;
                         } else {
+                            // Se não for uma URL completa, tente construir um caminho relativo
+                            // ATENÇÃO: Ajuste 'caminho/das/suas/imagens/' para o diretório real das suas imagens locais
+                            // Ex: se suas imagens estão em uma pasta chamada 'assets', mude para 'assets/${value}'
                             popupContent += `<img src="caminho/das/suas/imagens/${value}" alt="Imagem" style="width:100%;max-height:150px;"><br>`;
                         }
                     }
@@ -182,6 +194,8 @@
                 }
             }
 
+            // Agora, adicione as informações linkadas
+            // Isso requer que suas features tenham uma propriedade como 'id_area' para associação.
             if (feature.properties.id_area) {
                 const idArea = feature.properties.id_area;
 
@@ -208,7 +222,7 @@
                     if (pontosAssociados.length > 0) {
                         popupContent += '<hr><strong>Pontos nesta Área:</strong><br>';
                         pontosAssociados.forEach((ponto, index) => {
-                            popupContent += `<strong>${ponto.properties.Empreendim || 'Ponto ' + (index + 1)}</strong><br>`;
+                            popupContent += `<strong>${ponto.properties.Empreendim || 'Ponto ' + (index + 1)}</strong><br>`; // Assumindo 'Empreendim' para o nome do ponto
                             if (ponto.properties.imagem && typeof ponto.properties.imagem === 'string') {
                                 if (ponto.properties.imagem.startsWith('http://') || ponto.properties.imagem.startsWith('https://')) {
                                     popupContent += `<img src="${ponto.properties.imagem}" alt="Imagem do Ponto" style="width:100%;max-height:80px;"><br>`;
@@ -227,41 +241,42 @@
         function downloadGeoJSON(data, filename) {
             if (!data) {
                 console.error(`Dados para ${filename} não disponíveis.`);
-                alert(`Dados para ${filename} não disponíveis para download.`);
+                alert(`Dados para ${filename} não disponíveis para download. Por favor, carregue a camada primeiro.`);
                 return;
             }
 
             const geojsonBlob = new Blob([JSON.stringify({
                 type: "FeatureCollection",
                 features: data
-            }, null, 2)], { type: 'application/json' }); // Formata com indentação
+            }, null, 2)], { type: 'application/json' });
 
             const url = URL.createObjectURL(geojsonBlob);
             const a = document.createElement('a');
             a.href = url;
             a.download = filename;
-            document.body.appendChild(a); // Necessário para Firefox
+            document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url); // Libera o objeto URL
+            URL.revokeObjectURL(url);
         }
 
-        // Função para verificar se todos os dados foram carregados e então configurar as camadas e controles
+        // Função para verificar se ambos os GeoJSONs foram carregados
+        // e então configurar as camadas e adicionar ao mapa/controle
         function checkAllDataLoaded() {
             if (todosOsPontosData !== null && todosOsPoligonosData !== null) {
                 console.log('Todos os dados GeoJSON foram carregados. Configurando camadas e controles.');
 
-                // Limpa as camadas antigas do mapa e do controle de camadas
+                // Remove camadas antigas do mapa e do controle de camadas antes de re-adicionar
                 if (pontosLayer) {
                     map.removeLayer(pontosLayer);
-                    layerControl.removeLayer(pontosLayer); // Remove do controle também
+                    layerControl.removeLayer(pontosLayer);
                 }
                 if (poligonosLayer) {
                     map.removeLayer(poligonosLayer);
-                    layerControl.removeLayer(poligonosLayer); // Remove do controle também
+                    layerControl.removeLayer(poligonosLayer);
                 }
 
-                // Recria a camada de polígonos com onEachFeature completo
+                // Cria e adiciona a camada de polígonos ao mapa
                 poligonosLayer = L.geoJSON({ type: "FeatureCollection", features: todosOsPoligonosData }, {
                     style: {
                         color: 'red',
@@ -273,9 +288,9 @@
                         const popupContent = buildPopupContent(feature, 'poligono', related);
                         layer.bindPopup(popupContent);
                     }
-                }).addTo(map); // Adiciona ao mapa por padrão
+                }).addTo(map);
 
-                // Recria a camada de pontos com onEachFeature completo
+                // Cria e adiciona a camada de pontos ao mapa
                 pontosLayer = L.geoJSON({ type: "FeatureCollection", features: todosOsPontosData }, {
                     pointToLayer: function (feature, latlng) {
                         const customIcon = L.icon({
@@ -292,7 +307,7 @@
                         layer.bindPopup(popupContent);
 
                         // Adiciona item à sidebar (mantém a lógica original)
-                        const nome = feature.properties['Empreendim'] || 'Ponto sem Nome';
+                        const nome = feature.properties['Empreendim'] || 'Sem Nome';
                         const li = document.createElement('li');
                         li.textContent = nome;
                         li.onclick = () => {
@@ -301,10 +316,10 @@
                         };
                         document.getElementById('emp-list').appendChild(li);
                     }
-                }).addTo(map); // Adiciona ao mapa por padrão
+                }).addTo(map);
 
-                // Adiciona as camadas ao Layer Control do Leaflet
-                // Limpa o controle existente antes de adicionar novas camadas
+                // Re-adiciona o controle de camadas ao mapa com as camadas atualizadas
+                // Remove o controle antigo primeiro para evitar duplicatas se checkAllDataLoaded for chamado várias vezes
                 if (layerControl) {
                     map.removeControl(layerControl);
                 }
@@ -314,13 +329,13 @@
                 };
                 layerControl = L.control.layers(null, overlayMaps).addTo(map);
 
-                // Configura os botões de download
-                document.getElementById('downloadPontosBtn').onclick = () => downloadGeoJSON(todosOsPontosData, 'Danos_pontos_download.geojson');
-                document.getElementById('downloadPoligonosBtn').onclick = () => downloadGeoJSON(todosOsPoligonosData, 'Danos_poligonos_download.geojson');
+                // Configura os event listeners para os botões de download
+                document.getElementById('downloadPontosBtn').onclick = () => downloadGeoJSON(todosOsPontosData, 'Danos_pontos.geojson');
+                document.getElementById('downloadPoligonosBtn').onclick = () => downloadGeoJSON(todosOsPoligonosData, 'Danos_poligonos.geojson');
             }
         }
 
-        // Carrega polígonos e armazena os dados
+        // Carrega polígonos
         fetch('Danos.geojson')
             .then(res => {
                 if (!res.ok) {
@@ -330,14 +345,14 @@
                 return res.json();
             })
             .then(poligonosData => {
-                todosOsPoligonosData = poligonosData.features;
-                checkAllDataLoaded();
+                todosOsPoligonosData = poligonosData.features; // Armazena as features
+                checkAllDataLoaded(); // Tenta configurar as camadas
             })
             .catch(error => {
                 console.error('Erro no fetch ou processamento de Danos.geojson:', error);
             });
 
-        // Carrega pontos e armazena os dados
+        // Carrega pontos
         fetch('Danos ponto.geojson')
             .then(res => {
                 if (!res.ok) {
@@ -347,8 +362,8 @@
                 return res.json();
             })
             .then(pontosData => {
-                todosOsPontosData = pontosData.features;
-                checkAllDataLoaded();
+                todosOsPontosData = pontosData.features; // Armazena as features
+                checkAllDataLoaded(); // Tenta configurar as camadas
             })
             .catch(error => {
                 console.error('Erro no fetch ou processamento de Danos ponto.geojson:', error);
