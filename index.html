@@ -94,63 +94,74 @@
             background-color: rgba(255, 255, 255, 0.9); /* Aumenta a opacidade do fundo ao passar o mouse */
         }
 
-        /* --- NOVOS ESTILOS PARA O CONTROLE DE DOWNLOAD PERSONALIZADO --- */
+        /* --- Estilos para o controle de download --- */
         .leaflet-control-download {
             background-color: white;
-            padding: 6px; /* Preenchimento interno */
-            border-radius: 4px; /* Bordas arredondadas */
-            box-shadow: 0 1px 5px rgba(0,0,0,0.4); /* Sombra para destacar */
+            padding: 6px;
+            border-radius: 4px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
             cursor: pointer;
             text-align: center;
-            font-size: 1.2em; /* Tamanho do ícone (seta) */
+            font-size: 1.2em;
             line-height: 1.2;
-            color: #333; /* Cor do ícone */
-            width: 30px; /* Largura do botão do ícone */
-            height: 30px; /* Altura do botão do ícone */
-            display: flex; /* Para centralizar o ícone */
+            color: #333;
+            width: 30px;
+            height: 30px;
+            display: flex;
             align-items: center;
             justify-content: center;
-            position: relative; /* Essencial para posicionar o menu dropdown abaixo/acima dele */
+            position: relative;
         }
 
         .leaflet-control-download-btn:hover {
-            background-color: #f4f4f4; /* Efeito hover para o botão principal */
+            background-color: #f4f4f4;
         }
 
         .leaflet-control-download-menu {
             position: absolute;
-            bottom: 100%; /* Posiciona o menu ACIMA do botão principal */
-            left: 0; /* Alinha à esquerda do botão principal */
+            bottom: 100%;
+            left: 0;
             background-color: white;
             border-radius: 4px;
             box-shadow: 0 1px 5px rgba(0,0,0,0.4);
             padding: 5px;
-            margin-bottom: 5px; /* Espaço entre o botão principal e o menu */
-            display: none; /* Inicialmente oculto */
-            width: 150px; /* Largura do menu de opções */
+            margin-bottom: 5px;
+            display: none;
+            width: 150px;
             box-sizing: border-box;
         }
 
+        /* Estilo para cada linha de item no menu de download (rótulo + botão) */
+        .leaflet-control-download-menu div.download-item { /* Adicionei uma classe 'download-item' para maior especificidade */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+
+        .leaflet-control-download-menu label {
+            flex-grow: 1; /* Permite que o rótulo ocupe o espaço disponível */
+            margin-right: 5px;
+        }
+
         .leaflet-control-download-menu button {
-            display: block; /* Cada botão de download em sua própria linha */
-            width: 100%;
-            padding: 8px 5px;
-            margin-bottom: 5px; /* Espaço entre os botões de download */
-            background-color: #007bff; /* Cor azul para os botões de download */
+            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 3px;
             cursor: pointer;
             font-size: 0.9em;
             text-align: center;
+            padding: 5px 8px;
         }
 
         .leaflet-control-download-menu button:hover {
-            background-color: #0056b3; /* Efeito hover para os botões de download */
+            background-color: #0056b3;
         }
 
-        .leaflet-control-download-menu button:last-child {
-            margin-bottom: 0; /* Remove margem inferior do último botão do menu */
+        /* Remove padding inferior do último item do menu */
+        .leaflet-control-download-menu div.download-item:last-child {
+            padding-bottom: 0;
         }
     </style>
 </head>
@@ -169,182 +180,125 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
-        // Inicializa o mapa Leaflet
-        // 'map': ID do elemento HTML onde o mapa será renderizado
-        // setView([latitude, longitude], zoom): Define a localização central e o nível de zoom inicial
-        var map = L.map('map').setView([-14.2350, -51.9253], 5); // Centralização no Brasil
+        var map = L.map('map').setView([-14.2350, -51.9253], 5);
 
-        // Adiciona uma camada de tiles (mapa base) do OpenStreetMap ao mapa
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19, // Define o nível máximo de zoom permitido
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' // Atribuição de direitos autorais
-        }).addTo(map); // Adiciona a camada de tiles ao mapa
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
 
-        // Referências aos elementos DOM da sidebar e do botão de toggle
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('toggle-btn');
 
-        // --- Adiciona um 'event listener' ao botão de toggle para alternar a visibilidade da sidebar ---
         toggleBtn.addEventListener('click', function () {
-            // Alterna a classe 'hidden' na sidebar.
-            // .classList.toggle('hidden') retorna true se a classe foi adicionada (sidebar oculta) ou false se foi removida (sidebar visível).
             const isHidden = sidebar.classList.toggle('hidden');
-            // Alterna a classe 'sidebar-hidden' no <body>.
-            // Isso pode ser usado no CSS para ajustar o mapa ou outros elementos quando a sidebar está oculta.
             document.body.classList.toggle('sidebar-hidden');
 
-            // Ajusta a posição do botão de toggle com base na visibilidade da sidebar
             if (isHidden) {
-                // Se a sidebar está OCULTA, o botão fica fixo a 10px da borda direita da tela (para abri-la)
                 toggleBtn.style.right = '10px';
             } else {
-                // Se a sidebar está VISÍVEL, o botão fica 20px da borda direita da sidebar (parecendo "dentro" dela)
-                // Isso posiciona o botão 20px para a esquerda da borda direita da sidebar
                 toggleBtn.style.right = '20px';
             }
 
-            // Invalida o tamanho do mapa após a transição da sidebar.
-            // Isso é necessário porque o Leaflet não detecta automaticamente mudanças de tamanho do contêiner,
-            // o que poderia causar problemas de renderização do mapa. O atraso (310ms)
-            // garante que a transição CSS da sidebar tenha tempo para completar.
             setTimeout(() => {
                 map.invalidateSize();
             }, 310);
         });
 
-        // Define a posição inicial do botão de toggle quando a página é carregada.
-        // Isso assume que a sidebar começa visível.
         if (!sidebar.classList.contains('hidden')) {
-            toggleBtn.style.right = '20px'; // Posiciona o botão "dentro" da sidebar logo na carga da página
+            toggleBtn.style.right = '20px';
         }
 
-        // --- Variáveis para armazenar os dados GeoJSON e as camadas Leaflet ---
-        let pontosLayer; // Variável para a camada de pontos do Leaflet
-        let poligonosLayer; // Variável para a camada de polígonos do Leaflet
-        let todosOsPontosData = null;    // Armazenará as features dos pontos GeoJSON após o carregamento
-        let todosOsPoligonosData = null; // Armazenará as features dos polígonos GeoJSON após o carregamento
+        let pontosLayer;
+        let poligonosLayer;
+        let todosOsPontosData = null;
+        let todosOsPoligonosData = null;
 
-        // --- Leaflet Layer Control (controle de camadas) ---
-        let overlayMaps = {}; // Objeto que conterá as camadas que o usuário pode ligar/desligar
-        // Inicializa o controle de camadas. Ele será adicionado ao mapa depois que os dados forem carregados.
-        // O terceiro argumento '{ position: 'bottomleft' }' define a posição do controle no mapa.
+        let overlayMaps = {};
         let layerControl = L.control.layers(null, overlayMaps, { position: 'bottomleft' });
 
-        // --- NOVO: Definição do Controle Leaflet de Download Personalizado ---
-        // Estende a classe base L.Control do Leaflet para criar um novo tipo de controle de mapa.
+        // --- Definição do Controle Leaflet de Download Personalizado ---
         L.Control.Download = L.Control.extend({
-            // onAdd: Método chamado quando o controle é adicionado ao mapa.
-            // 'map': A instância do mapa Leaflet.
             onAdd: function(map) {
-                // Cria o elemento principal do controle (o botão de seta).
-                // 'leaflet-bar' e 'leaflet-control' são classes padrão do Leaflet para controles.
                 this._div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-download');
-                this._div.innerHTML = '&#x2193;'; // Define o conteúdo HTML como um caractere Unicode de seta para baixo.
-                this._div.title = 'Download de Camadas'; // Define a dica de ferramenta (tooltip).
+                this._div.innerHTML = '&#x2193;'; // Seta para baixo Unicode
+                this._div.title = 'Download de Camadas';
 
-                // Cria o menu dropdown que conterá os botões de download.
                 this._menu = L.DomUtil.create('div', 'leaflet-control-download-menu', this._div);
-                this._menu.style.display = 'none'; // Inicialmente, o menu está oculto.
+                this._menu.style.display = 'none';
 
-                // Cria o botão de download para Pontos e o adiciona ao menu.
-                this._downloadBtnPontos = L.DomUtil.create('button', '', this._menu);
-                this._downloadBtnPontos.textContent = 'Download Pontos';
-                // Cria o botão de download para Polígonos e o adiciona ao menu.
-                this._downloadBtnPoligonos = L.DomUtil.create('button', '', this._menu);
-                this._downloadBtnPoligonos.textContent = 'Download Polígonos';
-
-                // Previne que os cliques no controle se propaguem para o mapa.
-                // Isso impede que o mapa pan/zoom quando o controle é clicado.
                 L.DomEvent.disableClickPropagation(this._div);
 
-                // Adiciona um evento de clique ao botão principal do controle (a seta).
-                // Ao clicar, ele alterna a visibilidade do menu dropdown.
                 L.DomEvent.on(this._div, 'click', function () {
                     this._menu.style.display = this._menu.style.display === 'block' ? 'none' : 'block';
-                }, this); // 'this' garante que o contexto correto (o controle) seja usado dentro da função.
+                }, this);
 
-                // Adiciona um evento de clique ao mapa. Se o usuário clicar em qualquer lugar do mapa,
-                // o menu de download é ocultado.
                 L.DomEvent.on(map, 'click', function () {
                     this._menu.style.display = 'none';
                 }, this);
 
-                return this._div; // Retorna o elemento DOM principal do controle.
+                return this._div;
             },
 
-            // onRemove: Método chamado quando o controle é removido do mapa (para limpeza, se necessário).
             onRemove: function(map) {
-                // Não há limpeza específica necessária neste caso simples.
             },
 
-            // Método para configurar os event listeners dos botões de download após os dados estarem carregados.
-            // 'pontosData', 'poligonosData': As features GeoJSON completas.
-            // 'downloadFn': A função global 'downloadGeoJSON' que realiza o download.
+            // Método para configurar os event listeners dos botões de download
             setDownloadData: function(pontosData, poligonosData, downloadFn) {
-                // Vincula a função de download aos botões específicos, passando os dados e o nome do arquivo.
-                this._downloadBtnPontos.onclick = () => downloadFn(pontosData, 'Danos_pontos.geojson');
-                this._downloadBtnPoligonos.onclick = () => downloadFn(poligonosData, 'Danos_poligonos.geojson');
+                this._menu.innerHTML = ''; // Limpa o conteúdo anterior do menu
+
+                // Adiciona opção de download para Pontos
+                const pontosDiv = L.DomUtil.create('div', 'download-item', this._menu); // Adicionado classe 'download-item'
+                const pontosLabel = L.DomUtil.create('label', '', pontosDiv);
+                pontosLabel.textContent = 'Pontos';
+                const downloadBtnPontos = L.DomUtil.create('button', '', pontosDiv);
+                downloadBtnPontos.textContent = 'Download';
+                downloadBtnPontos.onclick = () => downloadFn(pontosData, 'Danos_pontos.geojson');
+
+                // Adiciona opção de download para Polígonos
+                const poligonosDiv = L.DomUtil.create('div', 'download-item', this._menu); // Adicionado classe 'download-item'
+                const poligonosLabel = L.DomUtil.create('label', '', poligonosDiv);
+                poligonosLabel.textContent = 'Polígonos';
+                const downloadBtnPoligonos = L.DomUtil.create('button', '', poligonosDiv);
+                downloadBtnPoligonos.textContent = 'Download';
+                downloadBtnPoligonos.onclick = () => downloadFn(poligonosData, 'Danos_poligonos.geojson');
             }
         });
 
-        // Função de fábrica para criar instâncias do L.Control.Download.
         L.control.download = function(opts) {
             return new L.Control.Download(opts);
         }
 
-        // Cria uma instância do controle de download e a adiciona ao mapa, posicionada no canto inferior esquerdo.
         let downloadControl = L.control.download({ position: 'bottomleft' }).addTo(map);
 
-        // --- Função para construir o conteúdo HTML de um popup ---
-        // 'feature': O objeto GeoJSON da feição (ponto ou polígono)
-        // 'type': Uma string ('ponto' ou 'poligono') para diferenciar a feição atual
-        // 'relatedData': Um objeto contendo os dados da(s) outra(s) camada(s) (pontos ou polígonos) para linkagem
-        // ATENÇÃO: Esta função assume que suas features GeoJSON terão uma propriedade 'id_area'
-        // para linkar pontos e polígonos, e 'imagem'/'imagem_area' para URLs de imagem.
-        // Ajuste conforme a estrutura real das propriedades dos seus GeoJSONs.
         function buildPopupContent(feature, type, relatedData) {
-            let popupContent = ''; // String que construirá o HTML do popup
+            let popupContent = '';
 
-            // Itera sobre todas as propriedades da feição atual
             for (const key in feature.properties) {
-                const value = feature.properties[key]; // Valor da propriedade
-                // Verifica se a chave da propriedade é 'imagem' ou 'imagem_area' (não importa maiúsculas/minúsculas)
+                const value = feature.properties[key];
                 if (key.toLowerCase() === 'imagem' || key.toLowerCase() === 'imagem_area') {
-                    // Verifica se o valor da imagem existe e é uma string
                     if (value && typeof value === 'string') {
-                        // Verifica se o valor é uma URL completa (começa com http:// ou https://)
                         if (value.startsWith('http://') || value.startsWith('https://')) {
-                            // Adiciona uma tag <img> com a URL completa
                             popupContent += `<img src="${value}" alt="Imagem" style="width:100%;max-height:150px;"><br>`;
                         } else {
-                            // Se não for uma URL completa, assume que é um caminho relativo para uma imagem local.
-                            // ATENÇÃO: Você DEVE ajustar 'caminho/das/suas/imagens/' para o diretório real onde suas imagens estão.
                             popupContent += `<img src="caminho/das/suas/imagens/${value}" alt="Imagem" style="width:100%;max-height:150px;"><br>`;
                         }
                     }
                 } else {
-                    // Para outras propriedades, adiciona o nome da propriedade em negrito e seu valor
                     popupContent += `<strong>${key}</strong>: ${value}<br>`;
                 }
             }
 
-            // --- Lógica para adicionar informações linkadas de outras camadas ---
-            // Requer que as features tenham uma propriedade como 'id_area' para associar.
             if (feature.properties.id_area) {
-                const idArea = feature.properties.id_area; // Obtém o ID da área da feição atual
+                const idArea = feature.properties.id_area;
 
-                // Se a feição atual é um 'ponto' e temos dados de 'poligonos' para relacionar
                 if (type === 'ponto' && relatedData && relatedData.poligonos) {
-                    // Encontra o polígono que tem o mesmo 'id_area' que o ponto atual
                     const poligonoAssociado = relatedData.poligonos.find(poly => poly.properties.id_area === idArea);
                     if (poligonoAssociado) {
-                        // Adiciona um separador e um título para as informações da área relacionada
                         popupContent += '<hr><strong>Informações da Área Relacionada:</strong><br>';
-                        // Itera sobre as propriedades do polígono associado
                         for (const key in poligonoAssociado.properties) {
-                            if (key.toLowerCase() === 'id_area') continue; // Evita duplicar o ID da área
+                            if (key.toLowerCase() === 'id_area') continue;
                             const value = poligonoAssociado.properties[key];
-                            // Trata a propriedade 'imagem_area' do polígono
                             if (key.toLowerCase() === 'imagem_area' && value && typeof value === 'string') {
                                 if (value.startsWith('http://') || value.startsWith('https://')) {
                                     popupContent += `<img src="${value}" alt="Imagem da Área" style="width:100%;max-height:100px;"><br>`;
@@ -352,24 +306,16 @@
                                     popupContent += `<img src="caminho/das/suas/imagens/${value}" alt="Imagem da Área" style="width:100%;max-height:100px;"><br>`;
                                 }
                             } else {
-                                // Adiciona outras propriedades do polígono
                                 popupContent += `<strong>${key}</strong>: ${value}<br>`;
                             }
                         }
                     }
-                }
-                // Se a feição atual é um 'poligono' e temos dados de 'pontos' para relacionar
-                else if (type === 'poligono' && relatedData && relatedData.pontos) {
-                    // Filtra todos os pontos que têm o mesmo 'id_area' que o polígono atual
+                } else if (type === 'poligono' && relatedData && relatedData.pontos) {
                     const pontosAssociados = relatedData.pontos.filter(pt => pt.properties.id_area === idArea);
                     if (pontosAssociados.length > 0) {
-                        // Adiciona um separador e um título para os pontos nesta Área
                         popupContent += '<hr><strong>Pontos nesta Área:</strong><br>';
-                        // Itera sobre cada ponto associado
                         pontosAssociados.forEach((ponto, index) => {
-                            // Adiciona o nome do ponto (assumindo a propriedade 'Empreendim' ou um nome genérico)
                             popupContent += `<strong>${ponto.properties.Empreendim || 'Ponto ' + (index + 1)}</strong><br>`;
-                            // Trata a propriedade 'imagem' do ponto
                             if (ponto.properties.imagem && typeof ponto.properties.imagem === 'string') {
                                 if (ponto.properties.imagem.startsWith('http://') || ponto.properties.imagem.startsWith('https://')) {
                                     popupContent += `<img src="${ponto.properties.imagem}" alt="Imagem do Ponto" style="width:100%;max-height:80px;"><br>`;
@@ -381,189 +327,131 @@
                     }
                 }
             }
-            return popupContent; // Retorna a string HTML completa para o popup
+            return popupContent;
         }
 
-        // --- Função para gerar e iniciar o download de um GeoJSON ---
-        // 'data': As features GeoJSON a serem baixadas.
-        // 'filename': O nome do arquivo a ser salvo.
         function downloadGeoJSON(data, filename) {
-            console.log(`Tentando download de ${filename}. Dados:`, data); // Log de depuração
-            // Verifica se os dados estão disponíveis para download.
+            console.log(`Tentando download de ${filename}. Dados:`, data);
             if (!data) {
                 console.error(`Dados para ${filename} não disponíveis.`);
                 alert(`Dados para ${filename} não disponíveis para download. Por favor, carregue a camada primeiro.`);
                 return;
             }
 
-            // Cria um objeto Blob (Binary Large Object) a partir dos dados GeoJSON.
-            // JSON.stringify(data, null, 2) formata o JSON com indentação para melhor legibilidade.
             const geojsonBlob = new Blob([JSON.stringify({
-                type: "FeatureCollection", // Define o tipo como FeatureCollection (padrão GeoJSON)
-                features: data // As features GeoJSON
-            }, null, 2)], { type: 'application/json' }); // Define o tipo MIME como JSON.
+                type: "FeatureCollection",
+                features: data
+            }, null, 2)], { type: 'application/json' });
 
-            // Cria uma URL temporária para o Blob.
             const url = URL.createObjectURL(geojsonBlob);
-            // Cria um elemento <a> (link) na memória.
             const a = document.createElement('a');
-            a.href = url; // Define o atributo href do link para a URL do Blob.
-            a.download = filename; // Define o nome do arquivo para download.
-            document.body.appendChild(a); // Adiciona o link temporariamente ao corpo do documento (necessário para Firefox).
-            a.click(); // Simula um clique no link para iniciar o download.
-            document.body.removeChild(a); // Remove o link do corpo do documento.
-            URL.revokeObjectURL(url); // Libera a URL temporária para otimizar a memória.
-            console.log(`${filename} download iniciado.`); // Log de depuração.
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            console.log(`${filename} download iniciado.`);
         }
 
-        // --- Função para verificar o carregamento de ambos os GeoJSONs ---
-        // Esta função é chamada após cada `fetch` bem-sucedido.
-        // Ela só executa a configuração das camadas Leaflet quando AMBOS os conjuntos de dados (pontos e polígonos)
-        // estiverem completamente carregados (ou seja, não são mais 'null').
         function checkAllDataLoaded() {
-            // Verifica se ambos os dados GeoJSON foram carregados
             if (todosOsPontosData !== null && todosOsPoligonosData !== null) {
                 console.log('Todos os dados GeoJSON foram carregados. Configurando camadas e controles.');
 
-                // Limpa o conteúdo da lista de empreendimentos na sidebar.
-                // Isso evita duplicatas caso a função seja chamada mais de uma vez (ex: durante desenvolvimento/recarregamento).
                 document.getElementById('emp-list').innerHTML = '';
 
-
-                // --- Remove camadas existentes do mapa antes de recriá-las ---
-                // Isso é importante para evitar a sobreposição de camadas se a função for chamada novamente.
                 if (pontosLayer) {
-                    map.removeLayer(pontosLayer); // Remove a camada de pontos do mapa
+                    map.removeLayer(pontosLayer);
                 }
                 if (poligonosLayer) {
-                    map.removeLayer(poligonosLayer); // Remove a camada de polígonos do mapa
+                    map.removeLayer(poligonosLayer);
                 }
 
-                // --- Cria e adiciona a camada de polígonos ao mapa ---
-                // L.geoJSON: Função do Leaflet para criar uma camada a partir de dados GeoJSON.
                 poligonosLayer = L.geoJSON({ type: "FeatureCollection", features: todosOsPoligonosData }, {
-                    // Define o estilo visual dos polígonos
                     style: {
-                        color: 'red', // Cor da linha do polígono
-                        weight: 2, // Espessura da linha
-                        fillOpacity: 0.3 // Opacidade do preenchimento do polígono
+                        color: 'red',
+                        weight: 2,
+                        fillOpacity: 0.3
                     },
-                    // onEachFeature: Função executada para cada feição GeoJSON carregada.
-                    // 'feature': O objeto GeoJSON da feição atual.
-                    // 'layer': A camada Leaflet correspondente à feição atual (ex: um L.Polygon).
                     onEachFeature: function (feature, layer) {
-                        // Cria um objeto 'related' contendo os dados de 'pontos' para linkagem no popup.
                         const related = { pontos: todosOsPontosData };
-                        // Chama a função 'buildPopupContent' para gerar o HTML do popup.
                         const popupContent = buildPopupContent(feature, 'poligono', related);
-                        // Vincula o popup à camada Leaflet do polígono.
                         layer.bindPopup(popupContent);
                     }
-                }).addTo(map); // Adiciona a camada de polígonos ao mapa
+                }).addTo(map);
 
-                // --- Cria e adiciona a camada de pontos ao mapa ---
                 pontosLayer = L.geoJSON({ type: "FeatureCollection", features: todosOsPontosData }, {
-                    // pointToLayer: Função para customizar a criação de marcadores para feições de ponto.
-                    // 'feature': O objeto GeoJSON da feição de ponto.
-                    // 'latlng': O objeto de latitude/longitude do Leaflet para o ponto.
                     pointToLayer: function (feature, latlng) {
-                        // Define um ícone personalizado para o marcador.
                         const customIcon = L.icon({
-                            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', // URL da imagem do ícone
-                            iconSize: [25, 35], // Tamanho do ícone [largura, altura]
-                            iconAnchor: [12, 35], // Ponto do ícone que 'âncora' no latlng (base inferior central)
-                            popupAnchor: [0, -30] // Ponto relativo ao ícone onde o popup se abre
+                            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                            iconSize: [25, 35],
+                            iconAnchor: [12, 35],
+                            popupAnchor: [0, -30]
                         });
-                        // Retorna um marcador Leaflet com o ícone personalizado.
                         return L.marker(latlng, { icon: customIcon });
                     },
-                    // onEachFeature: Função executada para cada feição de ponto GeoJSON carregada.
                     onEachFeature: function (feature, layer) {
-                        // Cria um objeto 'related' contendo os dados de 'poligonos' para linkagem no popup.
                         const related = { poligonos: todosOsPoligonosData };
-                        // Gera o HTML do popup para o ponto.
                         const popupContent = buildPopupContent(feature, 'ponto', related);
-                        // Vincula o popup ao marcador.
                         layer.bindPopup(popupContent);
 
-                        // --- Lógica para adicionar itens à sidebar ---
-                        // Obtém o nome do empreendimento da propriedade 'Empreendim' ou usa 'Sem Nome'
                         const nome = feature.properties['Empreendim'] || 'Sem Nome';
-                        // Cria um novo elemento de lista (<li>)
                         const li = document.createElement('li');
-                        li.textContent = nome; // Define o texto do item da lista
-                        // Adiciona um evento de clique ao item da lista
+                        li.textContent = nome;
                         li.onclick = () => {
-                            // Ao clicar, o mapa se move para a localização do ponto com zoom 14
                             map.setView(layer.getLatLng(), 14);
-                            // Abre o popup do marcador correspondente
                             layer.openPopup();
                         };
-                        // Adiciona o item da lista ao elemento <ul> com o ID 'emp-list' na sidebar
                         document.getElementById('emp-list').appendChild(li);
                     }
-                }).addTo(map); // Adiciona a camada de pontos ao mapa
+                }).addTo(map);
 
-                // --- Re-adiciona o controle de camadas ao mapa ---
-                // Remove o controle antigo primeiro para evitar duplicatas, caso 'checkAllDataLoaded' seja chamada múltiplas vezes.
                 if (layerControl) {
                     map.removeControl(layerControl);
                 }
-                // Atualiza o objeto 'overlayMaps' com as camadas recém-criadas.
                 overlayMaps = {
                     "Pontos": pontosLayer,
                     "Polígonos": poligonosLayer
                 };
-                // Cria e adiciona o controle de camadas ao mapa, posicionando-o no canto inferior esquerdo.
                 layerControl = L.control.layers(null, overlayMaps, { position: 'bottomleft' }).addTo(map);
 
-                // --- Configura o novo controle de download personalizado ---
-                // Chama o método 'setDownloadData' do controle de download, passando os dados completos das camadas
-                // e a referência para a função global 'downloadGeoJSON'.
+                // Configura os event listeners para o novo controle de download personalizado
                 downloadControl.setDownloadData(todosOsPontosData, todosOsPoligonosData, downloadGeoJSON);
 
             } else {
-                // Mensagem de log se os dados ainda não foram completamente carregados
                 console.log('Aguardando o carregamento completo de ambos os GeoJSONs...');
             }
         }
 
-        // --- Carregamento de dados GeoJSON de Polígonos ---
-        // Usa a API Fetch para carregar o arquivo 'Danos.geojson' de forma assíncrona.
         fetch('Danos.geojson')
-            .then(res => { // Processa a resposta da requisição
-                // Verifica se a resposta da rede foi bem-sucedida (status 200 OK)
+            .then(res => {
                 if (!res.ok) {
-                    // Se não foi bem-sucedida, loga um erro e lança uma exceção
                     console.error('Erro ao carregar Danos.geojson:', res.status, res.statusText);
                     throw new Error('Erro ao carregar Danos.geojson');
                 }
-                return res.json(); // Converte a resposta para JSON
+                return res.json();
             })
-            .then(poligonosData => { // Processa os dados JSON recebidos
-                todosOsPoligonosData = poligonosData.features; // Armazena APENAS as 'features' do GeoJSON
-                checkAllDataLoaded(); // Tenta configurar as camadas (será executado quando ambos os dados estiverem prontos)
+            .then(poligonosData => {
+                todosOsPoligonosData = poligonosData.features;
+                checkAllDataLoaded();
             })
-            .catch(error => { // Captura e lida com quaisquer erros durante o fetch ou processamento
+            .catch(error => {
                 console.error('Erro no fetch ou processamento de Danos.geojson:', error);
             });
 
-        // --- Carregamento de dados GeoJSON de Pontos ---
-        // Usa a API Fetch para carregar o arquivo 'Danos ponto.geojson' de forma assíncrona.
         fetch('Danos ponto.geojson')
-            .then(res => { // Processa a resposta da requisição
-                // Verifica se a resposta da rede foi bem-sucedida
+            .then(res => {
                 if (!res.ok) {
                     console.error('Erro ao carregar Danos ponto.geojson:', res.status, res.statusText);
                     throw new Error('Erro ao carregar Danos ponto.geojson');
                 }
-                return res.json(); // Converte a resposta para JSON
+                return res.json();
             })
-            .then(pontosData => { // Processa os dados JSON recebidos
-                todosOsPontosData = pontosData.features; // Armazena APENAS as 'features' do GeoJSON
-                checkAllDataLoaded(); // Tenta configurar as camadas
+            .then(pontosData => {
+                todosOsPontosData = pontosData.features;
+                checkAllDataLoaded();
             })
-            .catch(error => { // Captura e lida com quaisquer erros durante o fetch ou processamento
+            .catch(error => {
                 console.error('Erro no fetch ou processamento de Danos ponto.geojson:', error);
             });
 
