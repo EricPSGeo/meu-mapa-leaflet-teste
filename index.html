@@ -220,28 +220,56 @@
         // --- Definição do Controle Leaflet de Download Personalizado ---
         L.Control.Download = L.Control.extend({
             onAdd: function(map) {
-                this._div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-download');
-                this._div.innerHTML = '&#x2913;'; // Seta para baixo de Download
-                this._div.title = 'Download de Camadas';
+            this._div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-download');
+            this._div.innerHTML = '&#x2193;'; // Seta para baixo Unicode
+            this._div.title = 'Download de Camadas';
 
-                this._menu = L.DomUtil.create('div', 'leaflet-control-download-menu', this._div);
-                this._menu.style.display = 'none';
+            this._menu = L.DomUtil.create('div', 'leaflet-control-download-menu', this._div);
+            this._menu.style.display = 'none'; // Inicialmente, o menu está oculto.
 
-                L.DomEvent.disableClickPropagation(this._div);
+            // Previne que os cliques no controle se propaguem para o mapa.
+            // Isso impede que o mapa pan/zoom quando o controle é clicado.
+            L.DomEvent.disableClickPropagation(this._div);
+            // Também desabilita a propagação de cliques para o menu, para que cliques nos botões internos não afetem o mapa.
+            L.DomEvent.disableClickPropagation(this._menu);
 
-                L.DomEvent.on(this._div, 'click', function () {
-                    this._menu.style.display = this._menu.style.display === 'block' ? 'none' : 'block';
-                }, this);
 
-                L.DomEvent.on(map, 'click', function () {
-                    this._menu.style.display = 'none';
-                }, this);
+            // --- MUDANÇAS AQUI: De clique para passar o mouse ---
 
-                return this._div;
-            },
+            // Adiciona evento para abrir o menu quando o mouse entra no botão principal
+            L.DomEvent.on(this._div, 'mouseenter', function () {
+                this._menu.style.display = 'block';
+            }, this);
 
-            onRemove: function(map) {
-            },
+            // Adiciona evento para fechar o menu quando o mouse sai DO BOTÃO PRINCIPAL
+            // e também quando o mouse sai DO MENU DE OPÇÕES.
+            // O uso de 'mouseleave' no _div e no _menu juntos ajuda a manter o menu aberto
+            // enquanto o mouse transita entre o botão e as opções.
+            L.DomEvent.on(this._div, 'mouseleave', function (e) {
+                // Pequeno atraso para permitir que o mouse entre no _menu antes que ele feche
+                setTimeout(() => {
+                    if (!this._div.contains(e.relatedTarget) && !this._menu.contains(e.relatedTarget)) {
+                        this._menu.style.display = 'none';
+                    }
+                }, 100); // 100ms de atraso
+            }, this);
+
+            L.DomEvent.on(this._menu, 'mouseleave', function (e) {
+                setTimeout(() => {
+                    if (!this._div.contains(e.relatedTarget) && !this._menu.contains(e.relatedTarget)) {
+                        this._menu.style.display = 'none';
+                    }
+                }, 100);
+            }, this);
+
+            // Remove o evento de clique no mapa para fechar o menu, pois não será mais necessário.
+            // L.DomEvent.on(map, 'click', function () {
+            //     this._menu.style.display = 'none';
+            // }, this);
+
+
+            return this._div;
+        },
 
             // Método para configurar os event listeners dos botões de download
             setDownloadData: function(pontosData, poligonosData, downloadFn) {
