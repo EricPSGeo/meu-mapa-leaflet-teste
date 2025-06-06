@@ -55,23 +55,24 @@
         }
 
         /* Estilos para o botão de alternar (toggle) a sidebar */
-        .toggle-btn {
-            position: fixed; /* Fixa o botão na tela */
-            top: 10px; /* 10px do topo */
-            /* A propriedade 'right' será ajustada via JavaScript para mantê-lo 'dentro' ou 'fora' */
-            background: rgba(33, 33, 33, 0.7); /* Fundo cinza escuro com opacidade */
-            color: #fff; /* Cor do texto/ícone branca */
-            padding: 5px 10px; /* Preenchimento interno */
-            cursor: pointer; /* Muda o cursor para indicar que é clicável */
-            z-index: 1000; /* Garante que o botão fique acima da sidebar */
-            border-radius: 5px; /* Bordas levemente arredondadas */
-            /* Adicionado para centralizar visualmente o ícone e definir tamanho fixo */
-            width: 40px; /* Largura explícita */
-            height: 40px; /* Altura explícita */
-            text-align: center; /* Centraliza o conteúdo (o ícone &#9776;) */
-            line-height: 30px; /* Centraliza verticalmente o ícone dentro da altura */
-            box-sizing: border-box; /* Inclui padding na largura/altura */
-        }
+       .toggle-btn {
+    position: fixed; /* Fixa o botão na tela */
+    top: 10px; /* 10px do topo */
+    /* A propriedade 'right' será ajustada via JavaScript para mantê-lo 'dentro' ou 'fora' */
+    background: white; /* Fundo branco */
+    color: black; /* Cor do texto/ícone preta para as listras */
+    padding: 5px 10px; /* Preenchimento interno */
+    cursor: pointer; /* Muda o cursor para indicar que é clicável */
+    z-index: 1000; /* Garante que o botão fique acima da sidebar */
+    border-radius: 5px; /* Bordas levemente arredondadas */
+    /* Adicionado para centralizar visualmente o ícone e definir tamanho fixo */
+    width: 40px; /* Largura explícita */
+    height: 40px; /* Altura explícita */
+    text-align: center; /* Centraliza o conteúdo (o ícone &#9776;) */
+    line-height: 40px; /* Centraliza verticalmente o ícone dentro da altura (mesmo valor da altura) */
+    box-sizing: border-box; /* Inclui padding na largura/altura */
+    border: 1px solid black; /* Borda preta para dar destaque no quadrado */
+}
 
         /* Estilos para a lista não ordenada (ul) dentro da sidebar */
         ul {
