@@ -4,72 +4,88 @@
 <head>
     <title>Mapa com Leaflet + Sidebar</title>
     <style>
+        /* Importa a folha de estilo padrão do Leaflet, essencial para o mapa funcionar */
         @import url(https://unpkg.com/leaflet@1.9.4/dist/leaflet.css);
 
+        /* Estilos globais para HTML e Body */
         html,
         body {
-            height: 100%;
-            margin: 0px;
-            padding: 0;
+            height: 100%; /* Define a altura total da viewport */
+            margin: 0px; /* Remove margens padrão do navegador */
+            padding: 0; /* Remove preenchimento padrão do navegador */
         }
 
+        /* Estilos para o contêiner do mapa */
         #map {
-            height: 100%;
+            height: 100%; /* Ocupa 100% da altura do elemento pai (body) */
+            /* Transição suave para o movimento do mapa quando a sidebar é ocultada/exibida */
             transition: transform 0.3s ease;
-            transform: translateX(0px);
-            width: 100%;
+            transform: translateX(0px); /* Posição inicial: sem translação horizontal */
+            width: 100%; /* Garante que o mapa ocupe 100% da largura disponível */
         }
 
+        /* Estilo para o mapa quando a sidebar está oculta.
+           Neste caso, a translação é 0, o que significa que o mapa se estende para a direita. */
         body.sidebar-hidden #map {
             transform: translateX(0);
         }
 
+        /* Estilos para a barra lateral (sidebar) */
         .sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 250px;
-            height: 100%;
+            position: fixed; /* Fixa a sidebar na tela, não rola com o conteúdo */
+            top: 0; /* Alinha no topo da tela */
+            right: 0; /* Alinha na direita da tela */
+            width: 250px; /* Largura da sidebar */
+            height: 100%; /* Ocupa 100% da altura da tela */
+            /* Cor de fundo com opacidade para dar um efeito translúcido.
+               'lab' é um modelo de cor, e '0.85' é a opacidade (85%). */
             background: lab(94.8% 0.01 -0.01 / 0.85);
-            border-left: 1px solid #ccc;
-            padding: 12px;
-            overflow-y: auto;
-            transition: transform 0.3s ease;
-            z-index: 999;
-            box-sizing: border-box;
+            border-left: 1px solid #ccc; /* Borda fina à esquerda */
+            padding: 12px; /* Preenchimento interno */
+            overflow-y: auto; /* Adiciona barra de rolagem vertical se o conteúdo exceder a altura */
+            transition: transform 0.3s ease; /* Transição suave para o movimento da sidebar */
+            z-index: 999; /* Garante que a sidebar fique acima da maioria dos outros elementos */
+            box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura/altura total */
         }
 
+        /* Estilo para a sidebar quando ela está oculta */
         .sidebar.hidden {
+            /* Move a sidebar para fora da tela, à direita, com base na sua largura */
             transform: translateX(250px);
         }
 
+        /* Estilos para o botão de alternar (toggle) a sidebar */
         .toggle-btn {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(33, 33, 33, 0.7);
-            color: #fff;
-            padding: 5px 10px;
-            cursor: pointer;
-            z-index: 1000;
-            border-radius: 5px;
+            position: fixed; /* Fixa o botão na tela */
+            top: 10px; /* 10px do topo */
+            right: 10px; /* 10px da direita (posição inicial) */
+            background: rgba(33, 33, 33, 0.7); /* Fundo cinza escuro com opacidade */
+            color: #fff; /* Cor do texto/ícone branca */
+            padding: 5px 10px; /* Preenchimento interno */
+            cursor: pointer; /* Muda o cursor para indicar que é clicável */
+            z-index: 1000; /* Garante que o botão fique acima da sidebar */
+            border-radius: 5px; /* Bordas levemente arredondadas */
         }
 
+        /* Estilos para a lista não ordenada (ul) dentro da sidebar */
         ul {
-            list-style: none;
-            padding: 0;
-            margin-bottom: 20px;
+            list-style: none; /* Remove marcadores de lista padrão */
+            padding: 0; /* Remove preenchimento padrão */
+            margin-bottom: 20px; /* Adiciona espaço abaixo da lista */
         }
 
+        /* Estilos para cada item da lista (li) dentro da sidebar */
         li {
-            margin: 10px 0;
-            cursor: pointer;
-            padding: 5px;
-            background-color: rgba(255, 255, 255, 0.7);
-            border-radius: 3px;
+            margin: 10px 0; /* Margem vertical entre os itens da lista */
+            cursor: pointer; /* Indica que o item é clicável */
+            padding: 5px; /* Preenchimento interno, criando a "borda com quadrado" */
+            background-color: rgba(255, 255, 255, 0.7); /* Fundo branco semitransparente para o item */
+            border-radius: 3px; /* Bordas levemente arredondadas para o "quadrado" */
         }
+
+        /* Estilo para os itens da lista quando o mouse passa por cima */
         li:hover {
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 255, 255, 0.9); /* Aumenta a opacidade do fundo ao passar o mouse */
         }
     </style>
 </head>
@@ -80,7 +96,7 @@
     <div class="sidebar" id="sidebar">
         <h4>Empreendimentos</h4>
         <ul id="emp-list"></ul>
-        </div>
+    </div>
 
     <div id="map"></div>
 
@@ -88,55 +104,118 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
-        var map = L.map('map').setView([-14.2350, -51.9253], 5);
+        // Inicializa o mapa Leaflet
+        // 'map': ID do elemento HTML onde o mapa será renderizado
+        // setView([latitude, longitude], zoom): Define a localização central e o nível de zoom inicial
+        var map = L.map('map').setView([-14.2350, -51.9253], 5); // Centralização no Brasil
 
+        // Adiciona uma camada de tiles (mapa base) do OpenStreetMap ao mapa
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map);
+            maxZoom: 19, // Define o nível máximo de zoom permitido
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' // Atribuição de direitos autorais
+        }).addTo(map); // Adiciona a camada de tiles ao mapa
 
-        // Referências aos elementos da sidebar e botão de toggle
+        // Referências aos elementos DOM da sidebar e do botão de toggle
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('toggle-btn');
-        // Variáveis para armazenar os dados GeoJSON e as camadas Leaflet
-        let pontosLayer;
-        let poligonosLayer;
-        let todosOsPontosData = null;
-        let todosOsPoligonosData = null;
 
-        // Leaflet Layer Control
-        let overlayMaps = {};
+        // --- Adiciona um 'event listener' ao botão de toggle para alternar a visibilidade da sidebar ---
+        toggleBtn.addEventListener('click', function () {
+            // Alterna a classe 'hidden' na sidebar.
+            // .classList.toggle('hidden') retorna true se a classe foi adicionada (sidebar oculta) ou false se foi removida (sidebar visível).
+            const isHidden = sidebar.classList.toggle('hidden');
+            // Alterna a classe 'sidebar-hidden' no <body>.
+            // Isso pode ser usado no CSS para ajustar o mapa ou outros elementos quando a sidebar está oculta.
+            document.body.classList.toggle('sidebar-hidden');
+
+            // Ajusta a posição do botão de toggle com base na visibilidade da sidebar
+            if (isHidden) {
+                // Se a sidebar está oculta, move o botão para a direita (10px da borda)
+                toggleBtn.style.right = '10px';
+            } else {
+                // Se a sidebar está visível, move o botão para a esquerda,
+                // para que ele fique à direita da sidebar + 10px de margem
+                toggleBtn.style.right = (sidebar.offsetWidth + 10) + 'px';
+            }
+
+            // Invalida o tamanho do mapa após a transição da sidebar.
+            // Isso é necessário porque o Leaflet não detecta automaticamente mudanças de tamanho do contêiner,
+            // o que poderia causar problemas de renderização do mapa. O atraso (310ms)
+            // garante que a transição CSS da sidebar tenha tempo para completar.
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 310);
+        });
+
+        // Define a posição inicial do botão de toggle quando a página é carregada.
+        // Se a sidebar não estiver oculta por padrão (o que é o caso),
+        // o botão é posicionado à direita da sidebar.
+        if (!sidebar.classList.contains('hidden')) {
+            toggleBtn.style.right = (sidebar.offsetWidth + 10) + 'px';
+        }
+
+        // --- Variáveis para armazenar os dados GeoJSON e as camadas Leaflet ---
+        let pontosLayer; // Variável para a camada de pontos do Leaflet
+        let poligonosLayer; // Variável para a camada de polígonos do Leaflet
+        let todosOsPontosData = null;    // Armazenará as features dos pontos GeoJSON após o carregamento
+        let todosOsPoligonosData = null; // Armazenará as features dos polígonos GeoJSON após o carregamento
+
+        // --- Leaflet Layer Control (controle de camadas) ---
+        let overlayMaps = {}; // Objeto que conterá as camadas que o usuário pode ligar/desligar
+        // Inicializa o controle de camadas. Ele será adicionado ao mapa depois que os dados forem carregados.
+        // O terceiro argumento '{ position: 'bottomleft' }' define a posição do controle no mapa.
         let layerControl = L.control.layers(null, overlayMaps, { position: 'bottomleft' });
 
-        // Função para construir o conteúdo do popup (mantida como antes)
+        // --- Função para construir o conteúdo HTML de um popup ---
+        // 'feature': O objeto GeoJSON da feição (ponto ou polígono)
+        // 'type': Uma string ('ponto' ou 'poligono') para diferenciar a feição atual
+        // 'relatedData': Um objeto contendo os dados da(s) outra(s) camada(s) (pontos ou polígonos) para linkagem
+        // ATENÇÃO: Esta função assume que suas features GeoJSON terão uma propriedade 'id_area'
+        // para linkar pontos e polígonos, e 'imagem'/'imagem_area' para URLs de imagem.
+        // Ajuste conforme a estrutura real das propriedades dos seus GeoJSONs.
         function buildPopupContent(feature, type, relatedData) {
-            let popupContent = '';
+            let popupContent = ''; // String que construirá o HTML do popup
 
+            // Itera sobre todas as propriedades da feição atual
             for (const key in feature.properties) {
-                const value = feature.properties[key];
+                const value = feature.properties[key]; // Valor da propriedade
+                // Verifica se a chave da propriedade é 'imagem' ou 'imagem_area' (não importa maiúsculas/minúsculas)
                 if (key.toLowerCase() === 'imagem' || key.toLowerCase() === 'imagem_area') {
+                    // Verifica se o valor da imagem existe e é uma string
                     if (value && typeof value === 'string') {
+                        // Verifica se o valor é uma URL completa (começa com http:// ou https://)
                         if (value.startsWith('http://') || value.startsWith('https://')) {
+                            // Adiciona uma tag <img> com a URL completa
                             popupContent += `<img src="${value}" alt="Imagem" style="width:100%;max-height:150px;"><br>`;
                         } else {
+                            // Se não for uma URL completa, assume que é um caminho relativo para uma imagem local.
+                            // ATENÇÃO: Você DEVE ajustar 'caminho/das/suas/imagens/' para o diretório real onde suas imagens estão.
                             popupContent += `<img src="caminho/das/suas/imagens/${value}" alt="Imagem" style="width:100%;max-height:150px;"><br>`;
                         }
                     }
                 } else {
+                    // Para outras propriedades, adiciona o nome da propriedade em negrito e seu valor
                     popupContent += `<strong>${key}</strong>: ${value}<br>`;
                 }
             }
 
+            // --- Lógica para adicionar informações linkadas de outras camadas ---
+            // Requer que as features tenham uma propriedade como 'id_area' para associar.
             if (feature.properties.id_area) {
-                const idArea = feature.properties.id_area;
+                const idArea = feature.properties.id_area; // Obtém o ID da área da feição atual
 
+                // Se a feição atual é um 'ponto' e temos dados de 'poligonos' para relacionar
                 if (type === 'ponto' && relatedData && relatedData.poligonos) {
+                    // Encontra o polígono que tem o mesmo 'id_area' que o ponto atual
                     const poligonoAssociado = relatedData.poligonos.find(poly => poly.properties.id_area === idArea);
                     if (poligonoAssociado) {
+                        // Adiciona um separador e um título para as informações da área relacionada
                         popupContent += '<hr><strong>Informações da Área Relacionada:</strong><br>';
+                        // Itera sobre as propriedades do polígono associado
                         for (const key in poligonoAssociado.properties) {
-                            if (key.toLowerCase() === 'id_area') continue;
+                            if (key.toLowerCase() === 'id_area') continue; // Evita duplicar o ID da área
                             const value = poligonoAssociado.properties[key];
+                            // Trata a propriedade 'imagem_area' do polígono
                             if (key.toLowerCase() === 'imagem_area' && value && typeof value === 'string') {
                                 if (value.startsWith('http://') || value.startsWith('https://')) {
                                     popupContent += `<img src="${value}" alt="Imagem da Área" style="width:100%;max-height:100px;"><br>`;
@@ -144,16 +223,24 @@
                                     popupContent += `<img src="caminho/das/suas/imagens/${value}" alt="Imagem da Área" style="width:100%;max-height:100px;"><br>`;
                                 }
                             } else {
+                                // Adiciona outras propriedades do polígono
                                 popupContent += `<strong>${key}</strong>: ${value}<br>`;
                             }
                         }
                     }
-                } else if (type === 'poligono' && relatedData && relatedData.pontos) {
+                }
+                // Se a feição atual é um 'poligono' e temos dados de 'pontos' para relacionar
+                else if (type === 'poligono' && relatedData && relatedData.pontos) {
+                    // Filtra todos os pontos que têm o mesmo 'id_area' que o polígono atual
                     const pontosAssociados = relatedData.pontos.filter(pt => pt.properties.id_area === idArea);
                     if (pontosAssociados.length > 0) {
+                        // Adiciona um separador e um título para os pontos nesta área
                         popupContent += '<hr><strong>Pontos nesta Área:</strong><br>';
+                        // Itera sobre cada ponto associado
                         pontosAssociados.forEach((ponto, index) => {
+                            // Adiciona o nome do ponto (assumindo a propriedade 'Empreendim' ou um nome genérico)
                             popupContent += `<strong>${ponto.properties.Empreendim || 'Ponto ' + (index + 1)}</strong><br>`;
+                            // Trata a propriedade 'imagem' do ponto
                             if (ponto.properties.imagem && typeof ponto.properties.imagem === 'string') {
                                 if (ponto.properties.imagem.startsWith('http://') || ponto.properties.imagem.startsWith('https://')) {
                                     popupContent += `<img src="${ponto.properties.imagem}" alt="Imagem do Ponto" style="width:100%;max-height:80px;"><br>`;
@@ -165,116 +252,154 @@
                     }
                 }
             }
-            return popupContent;
+            return popupContent; // Retorna a string HTML completa para o popup
         }
 
-        // A função downloadGeoJSON e o controle L.Control.Download foram removidos.
-
-        // Função para verificar se ambos os GeoJSONs foram carregados
+        // --- Função para verificar o carregamento de ambos os GeoJSONs ---
+        // Esta função é chamada após cada `fetch` bem-sucedido.
+        // Ela só executa a configuração das camadas Leaflet quando AMBOS os conjuntos de dados (pontos e polígonos)
+        // estiverem completamente carregados (ou seja, não são mais 'null').
         function checkAllDataLoaded() {
+            // Verifica se ambos os dados GeoJSON foram carregados
             if (todosOsPontosData !== null && todosOsPoligonosData !== null) {
                 console.log('Todos os dados GeoJSON foram carregados. Configurando camadas e controles.');
 
-                document.getElementById('emp-list').innerHTML = ''; // Limpa a lista da sidebar
+                // Limpa o conteúdo da lista de empreendimentos na sidebar.
+                // Isso evita duplicatas caso a função seja chamada mais de uma vez (ex: durante desenvolvimento/recarregamento).
+                document.getElementById('emp-list').innerHTML = '';
 
 
-                // Remove camadas antigas do mapa e do controle de camadas antes de re-adicionar
+                // --- Remove camadas existentes do mapa antes de recriá-las ---
+                // Isso é importante para evitar a sobreposição de camadas se a função for chamada novamente.
                 if (pontosLayer) {
-                    map.removeLayer(pontosLayer);
+                    map.removeLayer(pontosLayer); // Remove a camada de pontos do mapa
                 }
                 if (poligonosLayer) {
-                    map.removeLayer(poligonosLayer);
+                    map.removeLayer(poligonosLayer); // Remove a camada de polígonos do mapa
                 }
 
-                // Cria e adiciona a camada de polígonos ao mapa
+                // --- Cria e adiciona a camada de polígonos ao mapa ---
+                // L.geoJSON: Função do Leaflet para criar uma camada a partir de dados GeoJSON.
                 poligonosLayer = L.geoJSON({ type: "FeatureCollection", features: todosOsPoligonosData }, {
+                    // Define o estilo visual dos polígonos
                     style: {
-                        color: 'red',
-                        weight: 2,
-                        fillOpacity: 0.3
+                        color: 'red', // Cor da linha do polígono
+                        weight: 2, // Espessura da linha
+                        fillOpacity: 0.3 // Opacidade do preenchimento do polígono
                     },
+                    // onEachFeature: Função executada para cada feição GeoJSON carregada.
+                    // 'feature': O objeto GeoJSON da feição atual.
+                    // 'layer': A camada Leaflet correspondente à feição atual (ex: um L.Polygon).
                     onEachFeature: function (feature, layer) {
+                        // Cria um objeto 'related' contendo os dados de 'pontos' para linkagem no popup.
                         const related = { pontos: todosOsPontosData };
+                        // Chama a função 'buildPopupContent' para gerar o HTML do popup.
                         const popupContent = buildPopupContent(feature, 'poligono', related);
+                        // Vincula o popup à camada Leaflet do polígono.
                         layer.bindPopup(popupContent);
                     }
-                }).addTo(map);
+                }).addTo(map); // Adiciona a camada de polígonos ao mapa
 
-                // Cria e adiciona a camada de pontos ao mapa
+                // --- Cria e adiciona a camada de pontos ao mapa ---
                 pontosLayer = L.geoJSON({ type: "FeatureCollection", features: todosOsPontosData }, {
+                    // pointToLayer: Função para customizar a criação de marcadores para feições de ponto.
+                    // 'feature': O objeto GeoJSON da feição de ponto.
+                    // 'latlng': O objeto de latitude/longitude do Leaflet para o ponto.
                     pointToLayer: function (feature, latlng) {
+                        // Define um ícone personalizado para o marcador.
                         const customIcon = L.icon({
-                            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                            iconSize: [25, 35],
-                            iconAnchor: [12, 35],
-                            popupAnchor: [0, -30]
+                            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', // URL da imagem do ícone
+                            iconSize: [25, 35], // Tamanho do ícone [largura, altura]
+                            iconAnchor: [12, 35], // Ponto do ícone que 'âncora' no latlng (base inferior central)
+                            popupAnchor: [0, -30] // Ponto relativo ao ícone onde o popup se abre
                         });
+                        // Retorna um marcador Leaflet com o ícone personalizado.
                         return L.marker(latlng, { icon: customIcon });
                     },
+                    // onEachFeature: Função executada para cada feição de ponto GeoJSON carregada.
                     onEachFeature: function (feature, layer) {
+                        // Cria um objeto 'related' contendo os dados de 'poligonos' para linkagem no popup.
                         const related = { poligonos: todosOsPoligonosData };
+                        // Gera o HTML do popup para o ponto.
                         const popupContent = buildPopupContent(feature, 'ponto', related);
+                        // Vincula o popup ao marcador.
                         layer.bindPopup(popupContent);
 
+                        // --- Lógica para adicionar itens à sidebar ---
+                        // Obtém o nome do empreendimento da propriedade 'Empreendim' ou usa 'Sem Nome'
                         const nome = feature.properties['Empreendim'] || 'Sem Nome';
+                        // Cria um novo elemento de lista (<li>)
                         const li = document.createElement('li');
-                        li.textContent = nome;
+                        li.textContent = nome; // Define o texto do item da lista
+                        // Adiciona um evento de clique ao item da lista
                         li.onclick = () => {
+                            // Ao clicar, o mapa se move para a localização do ponto com zoom 14
                             map.setView(layer.getLatLng(), 14);
+                            // Abre o popup do marcador correspondente
                             layer.openPopup();
                         };
+                        // Adiciona o item da lista ao elemento <ul> com o ID 'emp-list' na sidebar
                         document.getElementById('emp-list').appendChild(li);
                     }
-                }).addTo(map);
+                }).addTo(map); // Adiciona a camada de pontos ao mapa
 
-                // Re-adiciona o controle de camadas ao mapa com as camadas atualizadas
+                // --- Re-adiciona o controle de camadas ao mapa ---
+                // Remove o controle antigo primeiro para evitar duplicatas, caso 'checkAllDataLoaded' seja chamada múltiplas vezes.
                 if (layerControl) {
                     map.removeControl(layerControl);
                 }
+                // Atualiza o objeto 'overlayMaps' com as camadas recém-criadas.
                 overlayMaps = {
                     "Pontos": pontosLayer,
                     "Polígonos": poligonosLayer
                 };
+                // Cria e adiciona o controle de camadas ao mapa, posicionando-o no canto inferior esquerdo.
                 layerControl = L.control.layers(null, overlayMaps, { position: 'bottomleft' }).addTo(map);
 
-                // A configuração dos event listeners para o download foi removida.
+                // A configuração de event listeners para o download foi removida.
 
             } else {
+                // Mensagem de log se os dados ainda não foram completamente carregados
                 console.log('Aguardando o carregamento completo de ambos os GeoJSONs...');
             }
         }
 
-        // Carrega polígonos
+        // --- Carregamento de dados GeoJSON de Polígonos ---
+        // Usa a API Fetch para carregar o arquivo 'Danos.geojson' de forma assíncrona.
         fetch('Danos.geojson')
-            .then(res => {
+            .then(res => { // Processa a resposta da requisição
+                // Verifica se a resposta da rede foi bem-sucedida (status 200 OK)
                 if (!res.ok) {
+                    // Se não foi bem-sucedida, loga um erro e lança uma exceção
                     console.error('Erro ao carregar Danos.geojson:', res.status, res.statusText);
                     throw new Error('Erro ao carregar Danos.geojson');
                 }
-                return res.json();
+                return res.json(); // Converte a resposta para JSON
             })
-            .then(poligonosData => {
-                todosOsPoligonosData = poligonosData.features;
-                checkAllDataLoaded();
+            .then(poligonosData => { // Processa os dados JSON recebidos
+                todosOsPoligonosData = poligonosData.features; // Armazena APENAS as 'features' do GeoJSON
+                checkAllDataLoaded(); // Tenta configurar as camadas (será executado quando ambos os dados estiverem prontos)
             })
-            .catch(error => {
+            .catch(error => { // Captura e lida com quaisquer erros durante o fetch ou processamento
                 console.error('Erro no fetch ou processamento de Danos.geojson:', error);
             });
 
-        // Carrega pontos
+        // --- Carregamento de dados GeoJSON de Pontos ---
+        // Usa a API Fetch para carregar o arquivo 'Danos ponto.geojson' de forma assíncrona.
         fetch('Danos ponto.geojson')
-            .then(res => {
+            .then(res => { // Processa a resposta da requisição
+                // Verifica se a resposta da rede foi bem-sucedida
                 if (!res.ok) {
                     console.error('Erro ao carregar Danos ponto.geojson:', res.status, res.statusText);
                     throw new Error('Erro ao carregar Danos ponto.geojson');
                 }
-                return res.json();
+                return res.json(); // Converte a resposta para JSON
             })
-            .then(pontosData => {
-                todosOsPontosData = pontosData.features;
-                checkAllDataLoaded();
+            .then(pontosData => { // Processa os dados JSON recebidos
+                todosOsPontosData = pontosData.features; // Armazena APENAS as 'features' do GeoJSON
+                checkAllDataLoaded(); // Tenta configurar as camadas
             })
-            .catch(error => {
+            .catch(error => { // Captura e lida com quaisquer erros durante o fetch ou processamento
                 console.error('Erro no fetch ou processamento de Danos ponto.geojson:', error);
             });
 
