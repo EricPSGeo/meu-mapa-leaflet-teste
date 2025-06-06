@@ -58,13 +58,19 @@
         .toggle-btn {
             position: fixed; /* Fixa o botão na tela */
             top: 10px; /* 10px do topo */
-            right: 10px; /* 10px da direita (posição inicial) */
+            /* A propriedade 'right' será ajustada via JavaScript para mantê-lo 'dentro' ou 'fora' */
             background: rgba(33, 33, 33, 0.7); /* Fundo cinza escuro com opacidade */
             color: #fff; /* Cor do texto/ícone branca */
             padding: 5px 10px; /* Preenchimento interno */
             cursor: pointer; /* Muda o cursor para indicar que é clicável */
             z-index: 1000; /* Garante que o botão fique acima da sidebar */
             border-radius: 5px; /* Bordas levemente arredondadas */
+            /* Adicionado para centralizar visualmente o ícone e definir tamanho fixo */
+            width: 40px; /* Largura explícita */
+            height: 40px; /* Altura explícita */
+            text-align: center; /* Centraliza o conteúdo (o ícone &#9776;) */
+            line-height: 30px; /* Centraliza verticalmente o ícone dentro da altura */
+            box-sizing: border-box; /* Inclui padding na largura/altura */
         }
 
         /* Estilos para a lista não ordenada (ul) dentro da sidebar */
@@ -130,12 +136,12 @@
 
             // Ajusta a posição do botão de toggle com base na visibilidade da sidebar
             if (isHidden) {
-                // Se a sidebar está oculta, move o botão para a direita (10px da borda)
+                // Se a sidebar está OCULTA, o botão fica fixo a 10px da borda direita da tela (para abri-la)
                 toggleBtn.style.right = '10px';
             } else {
-                // Se a sidebar está visível, move o botão para a esquerda,
-                // para que ele fique à direita da sidebar + 10px de margem
-                toggleBtn.style.right = (sidebar.offsetWidth + 10) + 'px';
+                // Se a sidebar está VISÍVEL, o botão fica 20px da borda direita da sidebar (parecendo "dentro" dela)
+                // Isso posiciona o botão 20px para a esquerda da borda direita da sidebar
+                toggleBtn.style.right = '20px';
             }
 
             // Invalida o tamanho do mapa após a transição da sidebar.
@@ -148,10 +154,9 @@
         });
 
         // Define a posição inicial do botão de toggle quando a página é carregada.
-        // Se a sidebar não estiver oculta por padrão (o que é o caso),
-        // o botão é posicionado à direita da sidebar.
+        // Isso assume que a sidebar começa visível.
         if (!sidebar.classList.contains('hidden')) {
-            toggleBtn.style.right = (sidebar.offsetWidth + 10) + 'px';
+            toggleBtn.style.right = '20px'; // Posiciona o botão "dentro" da sidebar logo na carga da página
         }
 
         // --- Variáveis para armazenar os dados GeoJSON e as camadas Leaflet ---
@@ -234,7 +239,7 @@
                     // Filtra todos os pontos que têm o mesmo 'id_area' que o polígono atual
                     const pontosAssociados = relatedData.pontos.filter(pt => pt.properties.id_area === idArea);
                     if (pontosAssociados.length > 0) {
-                        // Adiciona um separador e um título para os pontos nesta área
+                        // Adiciona um separador e um título para os pontos nesta Área
                         popupContent += '<hr><strong>Pontos nesta Área:</strong><br>';
                         // Itera sobre cada ponto associado
                         pontosAssociados.forEach((ponto, index) => {
