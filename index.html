@@ -93,6 +93,65 @@
         li:hover {
             background-color: rgba(255, 255, 255, 0.9); /* Aumenta a opacidade do fundo ao passar o mouse */
         }
+
+        /* --- NOVOS ESTILOS PARA O CONTROLE DE DOWNLOAD PERSONALIZADO --- */
+        .leaflet-control-download {
+            background-color: white;
+            padding: 6px; /* Preenchimento interno */
+            border-radius: 4px; /* Bordas arredondadas */
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4); /* Sombra para destacar */
+            cursor: pointer;
+            text-align: center;
+            font-size: 1.2em; /* Tamanho do ícone (seta) */
+            line-height: 1.2;
+            color: #333; /* Cor do ícone */
+            width: 30px; /* Largura do botão do ícone */
+            height: 30px; /* Altura do botão do ícone */
+            display: flex; /* Para centralizar o ícone */
+            align-items: center;
+            justify-content: center;
+            position: relative; /* Essencial para posicionar o menu dropdown abaixo/acima dele */
+        }
+
+        .leaflet-control-download-btn:hover {
+            background-color: #f4f4f4; /* Efeito hover para o botão principal */
+        }
+
+        .leaflet-control-download-menu {
+            position: absolute;
+            bottom: 100%; /* Posiciona o menu ACIMA do botão principal */
+            left: 0; /* Alinha à esquerda do botão principal */
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+            padding: 5px;
+            margin-bottom: 5px; /* Espaço entre o botão principal e o menu */
+            display: none; /* Inicialmente oculto */
+            width: 150px; /* Largura do menu de opções */
+            box-sizing: border-box;
+        }
+
+        .leaflet-control-download-menu button {
+            display: block; /* Cada botão de download em sua própria linha */
+            width: 100%;
+            padding: 8px 5px;
+            margin-bottom: 5px; /* Espaço entre os botões de download */
+            background-color: #007bff; /* Cor azul para os botões de download */
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        .leaflet-control-download-menu button:hover {
+            background-color: #0056b3; /* Efeito hover para os botões de download */
+        }
+
+        .leaflet-control-download-menu button:last-child {
+            margin-bottom: 0; /* Remove margem inferior do último botão do menu */
+        }
     </style>
 </head>
 
@@ -170,6 +229,71 @@
         // Inicializa o controle de camadas. Ele será adicionado ao mapa depois que os dados forem carregados.
         // O terceiro argumento '{ position: 'bottomleft' }' define a posição do controle no mapa.
         let layerControl = L.control.layers(null, overlayMaps, { position: 'bottomleft' });
+
+        // --- NOVO: Definição do Controle Leaflet de Download Personalizado ---
+        // Estende a classe base L.Control do Leaflet para criar um novo tipo de controle de mapa.
+        L.Control.Download = L.Control.extend({
+            // onAdd: Método chamado quando o controle é adicionado ao mapa.
+            // 'map': A instância do mapa Leaflet.
+            onAdd: function(map) {
+                // Cria o elemento principal do controle (o botão de seta).
+                // 'leaflet-bar' e 'leaflet-control' são classes padrão do Leaflet para controles.
+                this._div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-download');
+                this._div.innerHTML = '&#x2193;'; // Define o conteúdo HTML como um caractere Unicode de seta para baixo.
+                this._div.title = 'Download de Camadas'; // Define a dica de ferramenta (tooltip).
+
+                // Cria o menu dropdown que conterá os botões de download.
+                this._menu = L.DomUtil.create('div', 'leaflet-control-download-menu', this._div);
+                this._menu.style.display = 'none'; // Inicialmente, o menu está oculto.
+
+                // Cria o botão de download para Pontos e o adiciona ao menu.
+                this._downloadBtnPontos = L.DomUtil.create('button', '', this._menu);
+                this._downloadBtnPontos.textContent = 'Download Pontos';
+                // Cria o botão de download para Polígonos e o adiciona ao menu.
+                this._downloadBtnPoligonos = L.DomUtil.create('button', '', this._menu);
+                this._downloadBtnPoligonos.textContent = 'Download Polígonos';
+
+                // Previne que os cliques no controle se propaguem para o mapa.
+                // Isso impede que o mapa pan/zoom quando o controle é clicado.
+                L.DomEvent.disableClickPropagation(this._div);
+
+                // Adiciona um evento de clique ao botão principal do controle (a seta).
+                // Ao clicar, ele alterna a visibilidade do menu dropdown.
+                L.DomEvent.on(this._div, 'click', function () {
+                    this._menu.style.display = this._menu.style.display === 'block' ? 'none' : 'block';
+                }, this); // 'this' garante que o contexto correto (o controle) seja usado dentro da função.
+
+                // Adiciona um evento de clique ao mapa. Se o usuário clicar em qualquer lugar do mapa,
+                // o menu de download é ocultado.
+                L.DomEvent.on(map, 'click', function () {
+                    this._menu.style.display = 'none';
+                }, this);
+
+                return this._div; // Retorna o elemento DOM principal do controle.
+            },
+
+            // onRemove: Método chamado quando o controle é removido do mapa (para limpeza, se necessário).
+            onRemove: function(map) {
+                // Não há limpeza específica necessária neste caso simples.
+            },
+
+            // Método para configurar os event listeners dos botões de download após os dados estarem carregados.
+            // 'pontosData', 'poligonosData': As features GeoJSON completas.
+            // 'downloadFn': A função global 'downloadGeoJSON' que realiza o download.
+            setDownloadData: function(pontosData, poligonosData, downloadFn) {
+                // Vincula a função de download aos botões específicos, passando os dados e o nome do arquivo.
+                this._downloadBtnPontos.onclick = () => downloadFn(pontosData, 'Danos_pontos.geojson');
+                this._downloadBtnPoligonos.onclick = () => downloadFn(poligonosData, 'Danos_poligonos.geojson');
+            }
+        });
+
+        // Função de fábrica para criar instâncias do L.Control.Download.
+        L.control.download = function(opts) {
+            return new L.Control.Download(opts);
+        }
+
+        // Cria uma instância do controle de download e a adiciona ao mapa, posicionada no canto inferior esquerdo.
+        let downloadControl = L.control.download({ position: 'bottomleft' }).addTo(map);
 
         // --- Função para construir o conteúdo HTML de um popup ---
         // 'feature': O objeto GeoJSON da feição (ponto ou polígono)
@@ -258,6 +382,38 @@
                 }
             }
             return popupContent; // Retorna a string HTML completa para o popup
+        }
+
+        // --- Função para gerar e iniciar o download de um GeoJSON ---
+        // 'data': As features GeoJSON a serem baixadas.
+        // 'filename': O nome do arquivo a ser salvo.
+        function downloadGeoJSON(data, filename) {
+            console.log(`Tentando download de ${filename}. Dados:`, data); // Log de depuração
+            // Verifica se os dados estão disponíveis para download.
+            if (!data) {
+                console.error(`Dados para ${filename} não disponíveis.`);
+                alert(`Dados para ${filename} não disponíveis para download. Por favor, carregue a camada primeiro.`);
+                return;
+            }
+
+            // Cria um objeto Blob (Binary Large Object) a partir dos dados GeoJSON.
+            // JSON.stringify(data, null, 2) formata o JSON com indentação para melhor legibilidade.
+            const geojsonBlob = new Blob([JSON.stringify({
+                type: "FeatureCollection", // Define o tipo como FeatureCollection (padrão GeoJSON)
+                features: data // As features GeoJSON
+            }, null, 2)], { type: 'application/json' }); // Define o tipo MIME como JSON.
+
+            // Cria uma URL temporária para o Blob.
+            const url = URL.createObjectURL(geojsonBlob);
+            // Cria um elemento <a> (link) na memória.
+            const a = document.createElement('a');
+            a.href = url; // Define o atributo href do link para a URL do Blob.
+            a.download = filename; // Define o nome do arquivo para download.
+            document.body.appendChild(a); // Adiciona o link temporariamente ao corpo do documento (necessário para Firefox).
+            a.click(); // Simula um clique no link para iniciar o download.
+            document.body.removeChild(a); // Remove o link do corpo do documento.
+            URL.revokeObjectURL(url); // Libera a URL temporária para otimizar a memória.
+            console.log(`${filename} download iniciado.`); // Log de depuração.
         }
 
         // --- Função para verificar o carregamento de ambos os GeoJSONs ---
@@ -361,7 +517,10 @@
                 // Cria e adiciona o controle de camadas ao mapa, posicionando-o no canto inferior esquerdo.
                 layerControl = L.control.layers(null, overlayMaps, { position: 'bottomleft' }).addTo(map);
 
-                // A configuração de event listeners para o download foi removida.
+                // --- Configura o novo controle de download personalizado ---
+                // Chama o método 'setDownloadData' do controle de download, passando os dados completos das camadas
+                // e a referência para a função global 'downloadGeoJSON'.
+                downloadControl.setDownloadData(todosOsPontosData, todosOsPoligonosData, downloadGeoJSON);
 
             } else {
                 // Mensagem de log se os dados ainda não foram completamente carregados
