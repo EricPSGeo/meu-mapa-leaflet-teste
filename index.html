@@ -16,9 +16,11 @@
         #map {
             height: 100%;
             transition: transform 0.3s ease;
-            transform: translateX(0px);
+            transform: translateX(0px); /* Inicialmente não transladado */
+            width: 100%; /* Garante que o mapa ocupe 100% da largura */
         }
 
+        /* Se a sidebar estiver escondida, o mapa não precisa transladar */
         body.sidebar-hidden #map {
             transform: translateX(0);
         }
@@ -27,29 +29,31 @@
             position: fixed;
             top: 0;
             right: 0;
-            width: 200px;
+            width: 250px; /* Ajuste a largura da sidebar para acomodar o toggle */
             height: 100%;
-            background: lab(94.8% 0.01 -0.01 / 0.199);
+            background: lab(94.8% 0.01 -0.01 / 0.85); /* Cor de fundo mais opaca */
             border-left: 1px solid #ccc;
             padding: 12px;
             overflow-y: auto;
             transition: transform 0.3s ease;
             z-index: 999;
+            box-sizing: border-box; /* Garante que padding e border não aumentem a largura total */
         }
 
         .sidebar.hidden {
-            transform: translateX(250px);
+            transform: translateX(250px); /* Move para fora da tela (mesma largura da sidebar) */
         }
 
         .toggle-btn {
             position: fixed;
             top: 10px;
             right: 10px;
-            background: lab(21.25% 0 0 / 0.50);
+            background: rgba(33, 33, 33, 0.7); /* Cor mais escura para contraste */
             color: #fff;
             padding: 5px 10px;
             cursor: pointer;
             z-index: 1000;
+            border-radius: 5px; /* Bordas arredondadas */
         }
 
         ul {
@@ -60,6 +64,12 @@
         li {
             margin: 10px 0;
             cursor: pointer;
+            padding: 5px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 3px;
+        }
+        li:hover {
+            background-color: rgba(255, 255, 255, 0.9);
         }
     </style>
 </head>
@@ -74,12 +84,11 @@
 
     <div id="map"></div>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
-        var map = L.map('map').setView([-14.2350, -51.9253], 6);
+        var map = L.map('map').setView([-14.2350, -51.9253], 6); // Centro do mapa
 
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
@@ -87,39 +96,136 @@
         }).addTo(map);
 
         // Toggle da sidebar
-        document.getElementById('toggle-btn').addEventListener('click', function () {
-            document.querySelector('.sidebar').classList.toggle('hidden');
-            document.body.classList.toggle('sidebar-hidden');
+        const sidebar = document.getElementById('sidebar');
+        const mapElement = document.getElementById('map');
+        const toggleBtn = document.getElementById('toggle-btn');
+
+        toggleBtn.addEventListener('click', function () {
+            const isHidden = sidebar.classList.toggle('hidden');
+            document.body.classList.toggle('sidebar-hidden', isHidden); // Adiciona/remove 'sidebar-hidden' no body
+
+            // Ajusta a posição do botão de toggle
+            if (isHidden) {
+                toggleBtn.style.right = '10px'; // Botão fica à direita quando sidebar escondida
+            } else {
+                toggleBtn.style.right = (sidebar.offsetWidth + 10) + 'px'; // Botão move com a sidebar
+            }
+
+            // Invalida o tamanho do mapa após a transição
             setTimeout(() => {
                 map.invalidateSize();
-            }, 310);
+            }, 310); // Tempo um pouco maior que a transição CSS
         });
 
-        // Carrega polígonos
-        fetch('Danos.geojson')
-            .then(res => res.json())
-            .then(poligonosData => {
-                L.geoJSON(poligonosData, {
+        // Posiciona o botão de toggle inicialmente se a sidebar estiver visível (padrão)
+        // Isso é importante para que o botão não cubra parte da sidebar se ela estiver visível
+        // ou para que ele não fique no meio da sidebar se ela estiver escondida
+        if (!sidebar.classList.contains('hidden')) {
+            toggleBtn.style.right = (sidebar.offsetWidth + 10) + 'px';
+        }
+
+        // Variáveis para armazenar os dados e camadas do Leaflet
+        let pontosLayer;
+        let poligonosLayer;
+        let todosOsPontosData = null;    // Inicializa como null para controle de carregamento
+        let todosOsPoligonosData = null; // Inicializa como null para controle de carregamento
+
+        // Função para construir o conteúdo do popup
+        function buildPopupContent(feature, type, relatedData) {
+            let popupContent = '';
+
+            // Adiciona as propriedades da própria feição
+            for (const key in feature.properties) {
+                const value = feature.properties[key];
+                if (key.toLowerCase() === 'imagem' || key.toLowerCase() === 'imagem_area') {
+                    // Trata as propriedades de imagem
+                    if (value && typeof value === 'string') {
+                        // Verifica se é uma URL completa
+                        if (value.startsWith('http://') || value.startsWith('https://')) {
+                            popupContent += `<img src="${value}" alt="Imagem" style="width:100%;max-height:150px;"><br>`;
+                        } else {
+                            // Se não for uma URL completa, tente construir um caminho relativo
+                            // ATENÇÃO: Ajuste 'caminho/das/suas/imagens/' para o diretório real das suas imagens locais
+                            // Se todas as suas imagens estiverem na raiz ou em 'images/', ajuste aqui.
+                            popupContent += `<img src="caminho/das/suas/imagens/${value}" alt="Imagem" style="width:100%;max-height:150px;"><br>`;
+                        }
+                    }
+                } else {
+                    popupContent += `<strong>${key}</strong>: ${value}<br>`;
+                }
+            }
+
+            // Agora, adicione as informações linkadas
+            // Assumimos que tanto pontos quanto polígonos têm uma propriedade 'id_area'
+            if (feature.properties.id_area) {
+                const idArea = feature.properties.id_area;
+
+                if (type === 'ponto' && relatedData && relatedData.poligonos) {
+                    const poligonoAssociado = relatedData.poligonos.find(poly => poly.properties.id_area === idArea);
+                    if (poligonoAssociado) {
+                        popupContent += '<hr><strong>Informações da Área Relacionada:</strong><br>';
+                        for (const key in poligonoAssociado.properties) {
+                            if (key.toLowerCase() === 'id_area') continue; // Evita duplicar o ID
+                            const value = poligonoAssociado.properties[key];
+                            if (key.toLowerCase() === 'imagem_area' && value && typeof value === 'string') {
+                                if (value.startsWith('http://') || value.startsWith('https://')) {
+                                    popupContent += `<img src="${value}" alt="Imagem da Área" style="width:100%;max-height:100px;"><br>`;
+                                } else {
+                                    popupContent += `<img src="caminho/das/suas/imagens/${value}" alt="Imagem da Área" style="width:100%;max-height:100px;"><br>`;
+                                }
+                            } else {
+                                popupContent += `<strong>${key}</strong>: ${value}<br>`;
+                            }
+                        }
+                    }
+                } else if (type === 'poligono' && relatedData && relatedData.pontos) {
+                    const pontosAssociados = relatedData.pontos.filter(pt => pt.properties.id_area === idArea);
+                    if (pontosAssociados.length > 0) {
+                        popupContent += '<hr><strong>Pontos nesta Área:</strong><br>';
+                        pontosAssociados.forEach((ponto, index) => {
+                            popupContent += `<strong>${ponto.properties.Empreendim || 'Ponto ' + (index + 1)}</strong><br>`; // Assumindo 'Empreendim' para o nome do ponto
+                            // Você pode adicionar mais detalhes do ponto aqui
+                            // Ex: popupContent += `  - Tipo: ${ponto.properties.tipo}<br>`;
+                            if (ponto.properties.imagem && typeof ponto.properties.imagem === 'string') {
+                                if (ponto.properties.imagem.startsWith('http://') || ponto.properties.imagem.startsWith('https://')) {
+                                    popupContent += `<img src="${ponto.properties.imagem}" alt="Imagem do Ponto" style="width:100%;max-height:80px;"><br>`;
+                                } else {
+                                    popupContent += `<img src="caminho/das/suas/imagens/${ponto.properties.imagem}" alt="Imagem do Ponto" style="width:100%;max-height:80px;"><br>`;
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+            return popupContent;
+        }
+
+        // Função para verificar se todos os dados foram carregados
+        function checkAllDataLoaded() {
+            if (todosOsPontosData !== null && todosOsPoligonosData !== null) {
+                console.log('Todos os dados GeoJSON foram carregados. Configurando camadas e popups.');
+
+                // Remove camadas antigas se existirem para evitar duplicação ao re-adicionar
+                if (pontosLayer) map.removeLayer(pontosLayer);
+                if (poligonosLayer) map.removeLayer(poligonosLayer);
+
+                // Recria a camada de polígonos com onEachFeature completo
+                poligonosLayer = L.geoJSON({ type: "FeatureCollection", features: todosOsPoligonosData }, {
                     style: {
                         color: 'red',
                         weight: 2,
                         fillOpacity: 0.3
                     },
                     onEachFeature: function (feature, layer) {
-                        let popupContent = '';
-                        for (const key in feature.properties) {
-                            popupContent += `<strong>${key}</strong>: ${feature.properties[key]}<br>`;
-                        }
+                        // Passa os dados dos pontos para que o popup do polígono possa referenciá-los
+                        const related = { pontos: todosOsPontosData };
+                        const popupContent = buildPopupContent(feature, 'poligono', related);
                         layer.bindPopup(popupContent);
                     }
                 }).addTo(map);
-            });
 
-        // Carrega pontos
-        fetch('Danos ponto.geojson')
-            .then(res => res.json())
-            .then(pontosData => {
-                L.geoJSON(pontosData, {
+                // Recria a camada de pontos com onEachFeature completo
+                pontosLayer = L.geoJSON({ type: "FeatureCollection", features: todosOsPontosData }, {
                     pointToLayer: function (feature, latlng) {
                         const customIcon = L.icon({
                             iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -130,17 +236,13 @@
                         return L.marker(latlng, { icon: customIcon });
                     },
                     onEachFeature: function (feature, layer) {
-                     let popupContent = '';
-for (const key in feature.properties) {
-    if (key.toLowerCase() === 'imagem') {
-        popupContent += `<img src="${feature.properties[key]}" alt="Imagem" style="width:100%;max-height:150px;"><br>`;
-    } else {
-        popupContent += `<strong>${key}</strong>: ${feature.properties[key]}<br>`;
-    }
-}
-layer.bindPopup(popupContent);
-                        // Adiciona item à sidebar
-                        const nome = feature.properties['Empreendim'] || 'Sem Nome';
+                        // Passa os dados dos polígonos para que o popup do ponto possa referenciá-los
+                        const related = { poligonos: todosOsPoligonosData };
+                        const popupContent = buildPopupContent(feature, 'ponto', related);
+                        layer.bindPopup(popupContent);
+
+                        // Adiciona item à sidebar (mantém a lógica original)
+                        const nome = feature.properties['Empreendim'] || 'Ponto sem Nome';
                         const li = document.createElement('li');
                         li.textContent = nome;
                         li.onclick = () => {
@@ -150,7 +252,43 @@ layer.bindPopup(popupContent);
                         document.getElementById('emp-list').appendChild(li);
                     }
                 }).addTo(map);
+            }
+        }
+
+        // Carrega polígonos e armazena os dados
+        fetch('Danos.geojson') // Certifique-se de que este arquivo existe
+            .then(res => {
+                if (!res.ok) {
+                    console.error('Erro ao carregar Danos.geojson:', res.status, res.statusText);
+                    throw new Error('Erro ao carregar Danos.geojson');
+                }
+                return res.json();
+            })
+            .then(poligonosData => {
+                todosOsPoligonosData = poligonosData.features; // Armazena APENAS as features
+                checkAllDataLoaded(); // Tenta configurar as camadas após carregar este dado
+            })
+            .catch(error => {
+                console.error('Erro no fetch ou processamento de Danos.geojson:', error);
             });
+
+        // Carrega pontos e armazena os dados
+        fetch('Danos ponto.geojson') // Certifique-se de que este arquivo existe
+            .then(res => {
+                if (!res.ok) {
+                    console.error('Erro ao carregar Danos ponto.geojson:', res.status, res.statusText);
+                    throw new Error('Erro ao carregar Danos ponto.geojson');
+                }
+                return res.json();
+            })
+            .then(pontosData => {
+                todosOsPontosData = pontosData.features; // Armazena APENAS as features
+                checkAllDataLoaded(); // Tenta configurar as camadas após carregar este dado
+            })
+            .catch(error => {
+                console.error('Erro no fetch ou processamento de Danos ponto.geojson:', error);
+            });
+
     </script>
 </body>
 
