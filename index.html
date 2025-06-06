@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Mapa com Leaflet + Sidebar</title>
+    <title>Mapa Tac's</title>
     <style>
         @import url(https://unpkg.com/leaflet@1.9.4/dist/leaflet.css);
 
@@ -25,24 +25,40 @@
         }
 
         .sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 250px;
-            height: 100%;
-            background: lab(94.8% 0.01 -0.01 / 0.85);
-            border-left: 1px solid #ccc;
-            padding: 12px;
-            overflow-y: auto;
-            transition: transform 0.3s ease;
-            z-index: 999;
-            box-sizing: border-box;
-        }
 
-        .sidebar.hidden {
-            transform: translateX(250px);
-        }
+            position: fixed;
 
+            top: 0;
+
+            right: 0;
+
+            width: 250px; /* Ajustei a largura para 250px para acomodar o botão de toggle na lateral */
+
+            height: 100%;
+
+            background: lab(94.8% 0.01 -0.01 / 0.85); /* Opacidade para o fundo */
+
+            border-left: 1px solid #ccc;
+
+            padding: 12px;
+
+            overflow-y: auto;
+
+            transition: transform 0.3s ease;
+
+            z-index: 999;
+
+            box-sizing: border-box; /* Inclui padding e border na largura total */
+
+        }
+
+
+
+        .sidebar.hidden {
+
+            transform: translateX(250px); /* Move para fora da tela (mesma largura da sidebar) */
+
+        }
         .toggle-btn {
             position: fixed;
             top: 10px;
