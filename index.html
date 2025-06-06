@@ -98,27 +98,7 @@
         // Referências aos elementos da sidebar e botão de toggle
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('toggle-btn');
-
-        // Toggle da sidebar
-        toggleBtn.addEventListener('click', function () {
-            const isHidden = sidebar.classList.toggle('hidden');
-            document.body.classList.toggle('sidebar-hidden');
-
-            if (isHidden) {
-                toggleBtn.style.right = '10px';
-            } else {
-                toggleBtn.style.right = (sidebar.offsetWidth + 10) + 'px';
-            }
-
-            setTimeout(() => {
-                map.invalidateSize();
-            }, 310);
-        });
-
-        if (!sidebar.classList.contains('hidden')) {
-            toggleBtn.style.right = (sidebar.offsetWidth + 10) + 'px';
         }
-
         // Variáveis para armazenar os dados GeoJSON e as camadas Leaflet
         let pontosLayer;
         let poligonosLayer;
