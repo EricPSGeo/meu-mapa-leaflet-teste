@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Mapa Tac's</title>
+    <title>Mapa com Leaflet + Sidebar</title>
     <style>
         /* Importa a folha de estilo padrão do Leaflet, essencial para o mapa funcionar */
         @import url(https://unpkg.com/leaflet@1.9.4/dist/leaflet.css);
@@ -10,88 +10,78 @@
         /* Estilos globais para HTML e Body */
         html,
         body {
-            height: 100%; /* Define a altura total da viewport */
-            margin: 0px; /* Remove margens padrão do navegador */
-            padding: 0; /* Remove preenchimento padrão do navegador */
+            height: 100%;
+            margin: 0px;
+            padding: 0;
         }
 
         /* Estilos para o contêiner do mapa */
         #map {
-            height: 100%; /* Ocupa 100% da altura do elemento pai (body) */
-            /* Transição suave para o movimento do mapa quando a sidebar é ocultada/exibida */
+            height: 100%;
             transition: transform 0.3s ease;
-            transform: translateX(0px); /* Posição inicial: sem translação horizontal */
-            width: 100%; /* Garante que o mapa ocupe 100% da largura disponível */
+            transform: translateX(0px);
+            width: 100%;
         }
 
-        /* Estilo para o mapa quando a sidebar está oculta.
-           Neste caso, a translação é 0, o que significa que o mapa se estende para a direita. */
         body.sidebar-hidden #map {
             transform: translateX(0);
         }
 
         /* Estilos para a barra lateral (sidebar) */
         .sidebar {
-            position: fixed; /* Fixa a sidebar na tela, não rola com o conteúdo */
-            top: 0; /* Alinha no topo da tela */
-            right: 0; /* Alinha na direita da tela */
-            width: 250px; /* Largura da sidebar */
-            height: 100%; /* Ocupa 100% da altura da tela */
-            /* Cor de fundo com opacidade para dar um efeito translúcido.
-               'lab' é um modelo de cor, e '0.85' é a opacidade (85%). */
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 250px;
+            height: 100%;
             background: lab(94.8% 0.01 -0.01 / 0.85);
-            border-left: 1px solid #ccc; /* Borda fina à esquerda */
-            padding: 12px; /* Preenchimento interno */
-            overflow-y: auto; /* Adiciona barra de rolagem vertical se o conteúdo exceder a altura */
-            transition: transform 0.3s ease; /* Transição suave para o movimento da sidebar */
-            z-index: 999; /* Garante que a sidebar fique acima da maioria dos outros elementos */
-            box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura/altura total */
+            border-left: 1px solid #ccc;
+            padding: 12px;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 999;
+            box-sizing: border-box;
         }
 
-        /* Estilo para a sidebar quando ela está oculta */
         .sidebar.hidden {
-            /* Move a sidebar para fora da tela, à direita, com base na sua largura */
             transform: translateX(250px);
         }
 
         /* Estilos para o botão de alternar (toggle) a sidebar */
         .toggle-btn {
-            position: fixed; /* Fixa o botão na tela */
-            top: 10px; /* 10px do topo */
-            /* A propriedade 'right' será ajustada via JavaScript para mantê-lo 'dentro' ou 'fora' */
-            background: rgba(33, 33, 33, 0.7); /* Fundo cinza escuro com opacidade */
-            color: #fff; /* Cor do texto/ícone branca */
-            padding: 5px 10px; /* Preenchimento interno */
-            cursor: pointer; /* Muda o cursor para indicar que é clicável */
-            z-index: 1000; /* Garante que o botão fique acima da sidebar */
-            border-radius: 5px; /* Bordas levemente arredondadas */
-            /* Adicionado para centralizar visualmente o ícone e definir tamanho fixo */
-            width: 40px; /* Largura explícita */
-            height: 40px; /* Altura explícita */
-            text-align: center; /* Centraliza o conteúdo (o ícone &#9776;) */
-            line-height: 30px; /* Centraliza verticalmente o ícone dentro da altura */
-            box-sizing: border-box; /* Inclui padding na largura/altura */
+            position: fixed;
+            top: 10px;
+            background: rgba(33, 33, 33, 0.7);
+            color: #fff;
+            padding: 5px 10px;
+            cursor: pointer;
+            z-index: 1000;
+            border-radius: 5px;
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            line-height: 30px;
+            box-sizing: border-box;
         }
 
         /* Estilos para a lista não ordenada (ul) dentro da sidebar */
         ul {
-            list-style: none; /* Remove marcadores de lista padrão */
-            padding: 0; /* Remove preenchimento padrão */
-            margin-bottom: 20px; /* Adiciona espaço abaixo da lista */
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
         }
 
         /* Estilos para cada item da lista (li) dentro da sidebar */
         li {
-            margin: 10px 0; /* Margem vertical entre os itens da lista */
-            cursor: pointer; /* Indica que o item é clicável */
-            padding: 5px; /* Preenchimento interno, criando a "borda com quadrado" */
-            background-color: rgba(255, 255, 255, 0.7); /* Fundo branco semitransparente para o item */
-            border-radius: 3px; /* Bordas levemente arredondadas para o "quadrado" */
+            margin: 10px 0;
+            cursor: pointer;
+            padding: 5px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 3px;
         }
 
-        /* Estilo para os itens da lista quando o mouse passa por cima */
         li:hover {
-            background-color: rgba(255, 255, 255, 0.9); /* Aumenta a opacidade do fundo ao passar o mouse */
+            background-color: rgba(255, 255, 255, 0.9);
         }
 
         /* --- Estilos para o controle de download --- */
@@ -111,6 +101,8 @@
             align-items: center;
             justify-content: center;
             position: relative;
+            /* Adicionado margin-bottom para separá-lo do controle de camadas, se necessário */
+            margin-bottom: 5px;
         }
 
         .leaflet-control-download-btn:hover {
@@ -119,20 +111,22 @@
 
         .leaflet-control-download-menu {
             position: absolute;
-            bottom: 100%;
-            left: 0;
+            /* MUDANÇA AQUI: Top: 0 e Left: 100% para expandir para a direita */
+            top: 0; /* Alinha o topo do menu com o topo do botão */
+            left: 100%; /* Posiciona o menu à direita do botão (100% da largura do botão) */
+            margin-left: 5px; /* Adiciona uma pequena margem entre o botão e o menu */
+            
             background-color: white;
             border-radius: 4px;
             box-shadow: 0 1px 5px rgba(0,0,0,0.4);
             padding: 5px;
-            margin-bottom: 5px;
             display: none;
             width: 150px;
             box-sizing: border-box;
         }
 
         /* Estilo para cada linha de item no menu de download (rótulo + botão) */
-        .leaflet-control-download-menu div.download-item { /* Adicionei uma classe 'download-item' para maior especificidade */
+        .leaflet-control-download-menu div.download-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -140,7 +134,7 @@
         }
 
         .leaflet-control-download-menu label {
-            flex-grow: 1; /* Permite que o rótulo ocupe o espaço disponível */
+            flex-grow: 1;
             margin-right: 5px;
         }
 
@@ -217,68 +211,49 @@
         let overlayMaps = {};
         let layerControl = L.control.layers(null, overlayMaps, { position: 'bottomleft' });
 
-        // --- Definição do Controle Leaflet de Download Personalizado ---
         L.Control.Download = L.Control.extend({
-            // ... (código anterior da classe L.Control.Download)
+            onAdd: function(map) {
+                this._div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-download');
+                this._div.innerHTML = '&#x2193;'; // Seta para baixo Unicode
+                this._div.title = 'Download de Camadas';
 
-        // onAdd: Método chamado quando o controle é adicionado ao mapa.
-        // 'map': A instância do mapa Leaflet.
-        onAdd: function(map) {
-            this._div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-download');
-            this._div.innerHTML = '&#x2193;'; // Seta para baixo Unicode
-            this._div.title = 'Download de Camadas';
+                this._menu = L.DomUtil.create('div', 'leaflet-control-download-menu', this._div);
+                this._menu.style.display = 'none';
 
-            this._menu = L.DomUtil.create('div', 'leaflet-control-download-menu', this._div);
-            this._menu.style.display = 'none'; // Inicialmente, o menu está oculto.
+                L.DomEvent.disableClickPropagation(this._div);
+                L.DomEvent.disableClickPropagation(this._menu);
 
-            // Previne que os cliques no controle se propaguem para o mapa.
-            // Isso impede que o mapa pan/zoom quando o controle é clicado.
-            L.DomEvent.disableClickPropagation(this._div);
-            // Também desabilita a propagação de cliques para o menu, para que cliques nos botões internos não afetem o mapa.
-            L.DomEvent.disableClickPropagation(this._menu);
+                L.DomEvent.on(this._div, 'mouseenter', function () {
+                    this._menu.style.display = 'block';
+                }, this);
 
+                L.DomEvent.on(this._div, 'mouseleave', function (e) {
+                    setTimeout(() => {
+                        if (!this._div.contains(e.relatedTarget) && !this._menu.contains(e.relatedTarget)) {
+                            this._menu.style.display = 'none';
+                        }
+                    }, 100);
+                }, this);
 
-            // --- MUDANÇA APENAS AQUI: De clique para passar o mouse ---
+                L.DomEvent.on(this._menu, 'mouseleave', function (e) {
+                    setTimeout(() => {
+                        if (!this._div.contains(e.relatedTarget) && !this._menu.contains(e.relatedTarget)) {
+                            this._menu.style.display = 'none';
+                        }
+                    }, 100);
+                }, this);
 
-            // Adiciona evento para abrir o menu quando o mouse entra no botão principal
-            L.DomEvent.on(this._div, 'mouseenter', function () {
-                this._menu.style.display = 'block'; // Mostra o menu
-            }, this);
+                return this._div;
+            },
 
-            // Adiciona evento para fechar o menu quando o mouse sair DO BOTÃO PRINCIPAL
-            // e também quando o mouse sair DO MENU DE OPÇÕES.
-            // O uso de 'mouseleave' no _div e no _menu juntos ajuda a manter o menu aberto
-            // enquanto o mouse transita entre o botão e as opções.
-            L.DomEvent.on(this._div, 'mouseleave', function (e) {
-                // Pequeno atraso para permitir que o mouse entre no _menu antes que ele feche
-                setTimeout(() => {
-                    // Verifica se o mouse não está mais sobre o _div nem sobre o _menu
-                    if (!this._div.contains(e.relatedTarget) && !this._menu.contains(e.relatedTarget)) {
-                        this._menu.style.display = 'none'; // Oculta o menu
-                    }
-                }, 100); // 100ms de atraso
-            }, this);
+            onRemove: function(map) {
+            },
 
-            L.DomEvent.on(this._menu, 'mouseleave', function (e) {
-                setTimeout(() => {
-                    // Verifica se o mouse não está mais sobre o _div nem sobre o _menu
-                    if (!this._div.contains(e.relatedTarget) && !this._menu.contains(e.relatedTarget)) {
-                        this._menu.style.display = 'none'; // Oculta o menu
-                    }
-                }, 100);
-            }, this);
-            // --- FIM DA MUDANÇA DE EVENTO ---
-
-
-            return this._div;
-        },
-
-            // Método para configurar os event listeners dos botões de download
             setDownloadData: function(pontosData, poligonosData, downloadFn) {
                 this._menu.innerHTML = ''; // Limpa o conteúdo anterior do menu
 
                 // Adiciona opção de download para Pontos
-                const pontosDiv = L.DomUtil.create('div', 'download-item', this._menu); // Adicionado classe 'download-item'
+                const pontosDiv = L.DomUtil.create('div', 'download-item', this._menu);
                 const pontosLabel = L.DomUtil.create('label', '', pontosDiv);
                 pontosLabel.textContent = 'Pontos';
                 const downloadBtnPontos = L.DomUtil.create('button', '', pontosDiv);
@@ -286,7 +261,7 @@
                 downloadBtnPontos.onclick = () => downloadFn(pontosData, 'Danos_pontos.geojson');
 
                 // Adiciona opção de download para Polígonos
-                const poligonosDiv = L.DomUtil.create('div', 'download-item', this._menu); // Adicionado classe 'download-item'
+                const poligonosDiv = L.DomUtil.create('div', 'download-item', this._menu);
                 const poligonosLabel = L.DomUtil.create('label', '', poligonosDiv);
                 poligonosLabel.textContent = 'Polígonos';
                 const downloadBtnPoligonos = L.DomUtil.create('button', '', poligonosDiv);
@@ -445,7 +420,6 @@
                 };
                 layerControl = L.control.layers(null, overlayMaps, { position: 'bottomleft' }).addTo(map);
 
-                // Configura os event listeners para o novo controle de download personalizado
                 downloadControl.setDownloadData(todosOsPontosData, todosOsPoligonosData, downloadGeoJSON);
 
             } else {
