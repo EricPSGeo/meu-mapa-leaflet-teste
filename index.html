@@ -130,12 +130,15 @@
                         return L.marker(latlng, { icon: customIcon });
                     },
                     onEachFeature: function (feature, layer) {
-                        let popupContent = '';
-                        for (const key in feature.properties) {
-                            popupContent += `<strong>${key}</strong>: ${feature.properties[key]}<br>`;
-                        }
-                        layer.bindPopup(popupContent);
-
+                      let popupContent = '';
+for (const key in feature.properties) {
+    if (key.toLowerCase() === 'Imagem') {
+        popupContent += `<img src="${feature.properties[key]}" alt="Imagem" style="width:100%;max-height:150px;"><br>`;
+    } else {
+        popupContent += `<strong>${key}</strong>: ${feature.properties[key]}<br>`;
+    }
+}
+layer.bindPopup(popupContent);
                         // Adiciona item à sidebar
                         const nome = feature.properties['Empreendim'] || 'Sem Nome';
                         const li = document.createElement('li');
