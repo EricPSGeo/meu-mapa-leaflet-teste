@@ -219,7 +219,11 @@
 
         // --- Definição do Controle Leaflet de Download Personalizado ---
         L.Control.Download = L.Control.extend({
-            onAdd: function(map) {
+            // ... (código anterior da classe L.Control.Download)
+
+        // onAdd: Método chamado quando o controle é adicionado ao mapa.
+        // 'map': A instância do mapa Leaflet.
+        onAdd: function(map) {
             this._div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-download');
             this._div.innerHTML = '&#x2193;'; // Seta para baixo Unicode
             this._div.title = 'Download de Camadas';
@@ -234,38 +238,36 @@
             L.DomEvent.disableClickPropagation(this._menu);
 
 
-            // --- MUDANÇAS AQUI: De clique para passar o mouse ---
+            // --- MUDANÇA APENAS AQUI: De clique para passar o mouse ---
 
             // Adiciona evento para abrir o menu quando o mouse entra no botão principal
             L.DomEvent.on(this._div, 'mouseenter', function () {
-                this._menu.style.display = 'block';
+                this._menu.style.display = 'block'; // Mostra o menu
             }, this);
 
-            // Adiciona evento para fechar o menu quando o mouse sai DO BOTÃO PRINCIPAL
-            // e também quando o mouse sai DO MENU DE OPÇÕES.
+            // Adiciona evento para fechar o menu quando o mouse sair DO BOTÃO PRINCIPAL
+            // e também quando o mouse sair DO MENU DE OPÇÕES.
             // O uso de 'mouseleave' no _div e no _menu juntos ajuda a manter o menu aberto
             // enquanto o mouse transita entre o botão e as opções.
             L.DomEvent.on(this._div, 'mouseleave', function (e) {
                 // Pequeno atraso para permitir que o mouse entre no _menu antes que ele feche
                 setTimeout(() => {
+                    // Verifica se o mouse não está mais sobre o _div nem sobre o _menu
                     if (!this._div.contains(e.relatedTarget) && !this._menu.contains(e.relatedTarget)) {
-                        this._menu.style.display = 'none';
+                        this._menu.style.display = 'none'; // Oculta o menu
                     }
                 }, 100); // 100ms de atraso
             }, this);
 
             L.DomEvent.on(this._menu, 'mouseleave', function (e) {
                 setTimeout(() => {
+                    // Verifica se o mouse não está mais sobre o _div nem sobre o _menu
                     if (!this._div.contains(e.relatedTarget) && !this._menu.contains(e.relatedTarget)) {
-                        this._menu.style.display = 'none';
+                        this._menu.style.display = 'none'; // Oculta o menu
                     }
                 }, 100);
             }, this);
-
-            // Remove o evento de clique no mapa para fechar o menu, pois não será mais necessário.
-            // L.DomEvent.on(map, 'click', function () {
-            //     this._menu.style.display = 'none';
-            // }, this);
+            // --- FIM DA MUDANÇA DE EVENTO ---
 
 
             return this._div;
