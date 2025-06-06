@@ -164,7 +164,8 @@
 
         // Leaflet Layer Control (será populado e adicionado ao mapa depois que os dados carregarem)
         let overlayMaps = {};
-        let layerControl = L.control.layers(null, overlayMaps); // Não adiciona ao mapa ainda
+        // ATENÇÃO: Mudança aqui para posicionar no canto inferior esquerdo
+        let layerControl = L.control.layers(null, overlayMaps, { position: 'bottomleft' });
 
         // Função para construir o conteúdo do popup (reincorporada e ajustada)
         // ATENÇÃO: Esta função assume que suas features GeoJSON terão uma propriedade 'id_area'
@@ -239,6 +240,7 @@
 
         // Função para gerar e iniciar o download de um GeoJSON
         function downloadGeoJSON(data, filename) {
+            console.log(`Tentando download de ${filename}. Dados:`, data); // Log de depuração
             if (!data) {
                 console.error(`Dados para ${filename} não disponíveis.`);
                 alert(`Dados para ${filename} não disponíveis para download. Por favor, carregue a camada primeiro.`);
@@ -258,6 +260,7 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            console.log(`${filename} download iniciado.`); // Log de depuração
         }
 
         // Função para verificar se ambos os GeoJSONs foram carregados
@@ -266,14 +269,18 @@
             if (todosOsPontosData !== null && todosOsPoligonosData !== null) {
                 console.log('Todos os dados GeoJSON foram carregados. Configurando camadas e controles.');
 
+                // Limpa o emp-list para evitar duplicatas se a função for chamada novamente
+                document.getElementById('emp-list').innerHTML = '';
+
+
                 // Remove camadas antigas do mapa e do controle de camadas antes de re-adicionar
                 if (pontosLayer) {
                     map.removeLayer(pontosLayer);
-                    layerControl.removeLayer(pontosLayer);
+                    // Não precisa remover do layerControl aqui, pois o controle inteiro será recriado
                 }
                 if (poligonosLayer) {
                     map.removeLayer(poligonosLayer);
-                    layerControl.removeLayer(poligonosLayer);
+                    // Não precisa remover do layerControl aqui, pois o controle inteiro será recriado
                 }
 
                 // Cria e adiciona a camada de polígonos ao mapa
@@ -319,7 +326,7 @@
                 }).addTo(map);
 
                 // Re-adiciona o controle de camadas ao mapa com as camadas atualizadas
-                // Remove o controle antigo primeiro para evitar duplicatas se checkAllDataLoaded for chamado várias vezes
+                // Remove o controle antigo primeiro para evitar duplicatas
                 if (layerControl) {
                     map.removeControl(layerControl);
                 }
@@ -327,11 +334,15 @@
                     "Pontos": pontosLayer,
                     "Polígonos": poligonosLayer
                 };
-                layerControl = L.control.layers(null, overlayMaps).addTo(map);
+                // ATENÇÃO: Posição do controle definida aqui!
+                layerControl = L.control.layers(null, overlayMaps, { position: 'bottomleft' }).addTo(map);
 
                 // Configura os event listeners para os botões de download
                 document.getElementById('downloadPontosBtn').onclick = () => downloadGeoJSON(todosOsPontosData, 'Danos_pontos.geojson');
                 document.getElementById('downloadPoligonosBtn').onclick = () => downloadGeoJSON(todosOsPoligonosData, 'Danos_poligonos.geojson');
+
+            } else {
+                console.log('Aguardando o carregamento completo de ambos os GeoJSONs...');
             }
         }
 
