@@ -309,52 +309,57 @@
                 };
                 layerControl = L.control.layers(null, overlayMaps, { position: 'bottomleft' }).addTo(map);
 
-                // --- NOVO: Adiciona botões de download ao controle de camadas padrão ---
+                // --- Adiciona botões de download ao controle de camadas padrão ---
                 // Obtém o contêiner DOM do controle de camadas Leaflet
                 const layerControlContainer = layerControl.getContainer();
                 
-                // Função auxiliar para encontrar o label da camada pelo texto
-                function findLayerLabel(container, layerName) {
-                    const labels = container.querySelectorAll('.leaflet-control-layers-selector + span');
-                    for (const label of labels) {
-                        if (label.textContent.trim() === layerName) {
-                            return label;
+                // Função auxiliar para encontrar o elemento <span> que contém o nome da camada
+                // O Leaflet cria um label que contém um input e um span com o texto da camada.
+                function findLayerTextSpan(container, layerName) {
+                    // Seleciona o span que é irmão do input de checkbox e contém o texto da camada
+                    const spans = container.querySelectorAll('.leaflet-control-layers-selector + span');
+                    for (const span of spans) {
+                        if (span.textContent.trim() === layerName) {
+                            return span;
                         }
                     }
                     return null;
                 }
 
                 // Adiciona botão para Pontos
-                const pontosLabelSpan = findLayerLabel(layerControlContainer, 'Pontos');
-                if (pontosLabelSpan) {
-                    const downloadIconPontos = L.DomUtil.create('span', 'leaflet-download-icon', pontosLabelSpan.parentNode); // Adiciona ao pai do span para que o checkbox não seja afetado
+                const pontosTextSpan = findLayerTextSpan(layerControlContainer, 'Pontos');
+                if (pontosTextSpan) {
+                    // Cria um novo elemento <span> para o ícone de download
+                    const downloadIconPontos = L.DomUtil.create('span', 'leaflet-download-icon');
                     downloadIconPontos.innerHTML = '&#x21E9;'; // Ícone de download (inbox com seta)
                     downloadIconPontos.title = 'Baixar dados de Pontos';
                     
-                    // Impede que o clique no ícone de download alterne a visibilidade da camada
-                    L.DomEvent.disableClickPropagation(downloadIconPontos);
+                    // Insere o ícone de download como um irmão do span do texto, DENTRO da label.
+                    // Isso o coloca ao lado do nome da camada.
+                    pontosTextSpan.parentNode.insertBefore(downloadIconPontos, pontosTextSpan.nextSibling);
+
+                    // Impede que o clique no ícone de download alterne a visibilidade da camada.
+                    // L.DomEvent.stop(e) faz stopPropagation e preventDefault.
                     L.DomEvent.on(downloadIconPontos, 'click', function (e) {
+                        L.DomEvent.stop(e); 
                         downloadGeoJSON(todosOsPontosData, 'Danos_pontos.geojson');
-                        L.DomEvent.stopPropagation(e); // Garante que o evento não ative o checkbox
                     });
                 }
 
                 // Adiciona botão para Polígonos
-                const poligonosLabelSpan = findLayerLabel(layerControlContainer, 'Polígonos');
-                if (poligonosLabelSpan) {
-                    const downloadIconPoligonos = L.DomUtil.create('span', 'leaflet-download-icon', poligonosLabelSpan.parentNode);
+                const poligonosTextSpan = findLayerTextSpan(layerControlContainer, 'Polígonos');
+                if (poligonosTextSpan) {
+                    const downloadIconPoligonos = L.DomUtil.create('span', 'leaflet-download-icon');
                     downloadIconPoligonos.innerHTML = '&#x21E9;'; // Ícone de download
                     downloadIconPoligonos.title = 'Baixar dados de Polígonos';
 
-                    L.DomEvent.disableClickPropagation(downloadIconPoligonos);
+                    poligonosTextSpan.parentNode.insertBefore(downloadIconPoligonos, poligonosTextSpan.nextSibling);
+
                     L.DomEvent.on(downloadIconPoligonos, 'click', function (e) {
+                        L.DomEvent.stop(e);
                         downloadGeoJSON(todosOsPoligonosData, 'Danos_poligonos.geojson');
-                        L.DomEvent.stopPropagation(e); // Garante que o evento não ative o checkbox
                     });
                 }
-
-                // O controle L.Control.Download e downloadControl.setDownloadData foram removidos.
-
             } else {
                 console.log('Aguardando o carregamento completo de ambos os GeoJSONs...');
             }
