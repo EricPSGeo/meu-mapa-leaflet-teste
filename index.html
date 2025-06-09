@@ -71,11 +71,9 @@
     box-sizing: border-box; /* Inclui padding na largura/altura */
     border: 1px solid #ccc; /* Borda cinza clara */
     box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leve sombra para dar um efeito de "levantado" *
-    /* --- MUDANÇA AQUI: Centralização com Flexbox --- */
     display: flex; /* Habilita o modelo flexbox para o contêiner */
     align-items: center; /* Centraliza os itens verticalmente (no eixo cruzado) */
     justify-content: center; /* Centraliza os itens horizontalmente (no eixo principal) */
-    /* REMOVIDOS: text-align: center; e line-height: 40px; */
 }
 
         /* Estilos para a lista não ordenada (ul) dentro da sidebar */
@@ -99,7 +97,6 @@
             background-color: rgba(255, 255, 255, 0.9); /* Aumenta a opacidade do fundo ao passar o mouse */
         }
 
-        /* --- NOVO ESTILO PARA O ÍCONE DE DOWNLOAD DENTRO DO CONTROLE DE CAMADAS --- */
         .leaflet-download-icon {
             font-size: 1.2em; /* Tamanho do ícone */
             margin-left: 8px; /* Espaçamento à esquerda do ícone */
@@ -129,7 +126,7 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
-        var map = L.map('map').setView([-14.2350, -51.9253], 5);
+        var map = L.map('map').setView([-14.2350, -51.9253], 6);
 
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
